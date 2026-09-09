@@ -1,0 +1,42 @@
+# ---- Gradle ----
+*.iml
+.gradle/
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# ---- Android Studio / IntelliJ ----
+*.iws
+.idea/shelf
+.idea/*.xml
+!.idea/codeStyles/
+!.idea/runConfigurations/
+
+# ---- Keystore files (NEVER commit real signing keys) ----
+*.jks
+*.keystore
+
+# ---- Google Services / secrets ----
+google-services.json
+
+# ---- Build outputs ----
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# ---- Log files ----
+*.log
+
+# ---- OS files ----
+Thumbs.db
