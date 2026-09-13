@@ -41,6 +41,7 @@ import com.example.techfix.ui.onboarding.professional.ProServiceCategoriesScreen
 import com.example.techfix.ui.onboarding.professional.ProSpecialtiesScreen
 import com.example.techfix.ui.onboarding.professional.ProWorkDetails
 import com.example.techfix.ui.onboarding.professional.ProWorkDetailsScreen
+import com.example.techfix.ui.about.AboutScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +72,7 @@ private object Routes {
     const val LOGIN = "login"
     const val SIGN_UP = "sign_up"
     const val PATHWAY = "pathway"
+    const val ABOUT = "about"
 
     // Client onboarding
     const val CATEGORIES = "categories"
@@ -316,13 +318,21 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         // ---------------- App ----------------
+                // ---------------- App ----------------
         composable(Routes.HOME) {
             val firstName = loggedInFullName.trim()
                 .split(" ")
                 .firstOrNull()
                 .takeUnless { it.isNullOrBlank() } ?: "Bem-vindo(a)"
 
-            HomeScreen(userFirstName = firstName)
+            HomeScreen(
+                userFirstName = firstName,
+                onAboutClick = { navController.navigate(Routes.ABOUT) }
+            )
+        }
+
+        composable(Routes.ABOUT) {
+            AboutScreen(onBack = { navController.popBackStack() })
         }
     }
 }
