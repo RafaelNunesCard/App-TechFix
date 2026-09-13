@@ -1,12 +1,20 @@
 package com.example.techfix.ui.about
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.item
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -16,6 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -28,26 +38,16 @@ import kotlinx.coroutines.launch
  * sentidos:
  * - Rolar a tela manualmente atualiza qual fatia fica destacada.
  * - Tocar numa fatia rola a tela até a seção correspondente.
+ *
+ * @param onBack chamado quando o usuário toca no botão de voltar no
+ *        canto superior esquerdo — quem chama essa tela (o NavHost no
+ *        MainActivity.kt) decide o que fazer (normalmente, popBackStack()).
  */
 @Composable
-fun AboutScreen() {
-    // "rememberLazyListState" guarda (e sobrevive a recomposições) a
-    // posição de scroll da lista — é o que nos permite tanto LER em
-    // que ponto o usuário está, quanto MANDAR a lista rolar sozinha.
+fun AboutScreen(onBack: () -> Unit = {}) {
     val listState = rememberLazyListState()
-
-    // "animateScrollToItem" é uma função "suspend" — só pode ser chamada
-    // de dentro de uma corrotina. "rememberCoroutineScope" nos dá um
-    // escopo pra abrir uma corrotina a partir de um clique (que não é
-    // suspend por natureza).
     val coroutineScope = rememberCoroutineScope()
 
-    // "derivedStateOf" recalcula esse valor só quando o resultado muda
-    // de verdade — evita redesenhar a roda a cada pixel rolado, e só
-    // atualiza quando o item visível no topo realmente muda de índice.
-    // OBS: essa é uma aproximação simples (pega o primeiro item visível
-    // da lista). Se depois você achar que a troca de destaque acontece
-    // "cedo" ou "tarde" demais durante o scroll, este é o lugar pra ajustar.
     val currentSectionIndex by remember {
         derivedStateOf { listState.firstVisibleItemIndex.coerceIn(0, aboutSections.lastIndex) }
     }
@@ -58,10 +58,6 @@ fun AboutScreen() {
                 state = listState,
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Cada "item" do LazyColumn é uma das 6 seções, na MESMA
-                // ordem da lista "aboutSections" (em AboutComponents.kt)
-                // — essa ordem é o que faz o índice do scroll bater com
-                // o índice da fatia certa na roda.
                 items(aboutSections) { section ->
                     when (section.id) {
                         "company" -> OurCompanySection()
@@ -72,10 +68,6 @@ fun AboutScreen() {
                         "team" -> OurTeamSection()
                     }
                 }
-
-                // O rodapé fica depois das 6 seções, fora da contagem
-                // que a roda usa (por isso é um "item" extra solto, e
-                // não faz parte da lista "aboutSections").
                 item { AboutFooterSection() }
             }
 
@@ -88,11 +80,27 @@ fun AboutScreen() {
                 },
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    // Empurra a roda pra direita, fazendo boa parte dela
-                    // "sangrar" pra fora da tela — só a fatia esquerda
-                    // do anel fica visível de verdade.
                     .offset(x = 90.dp)
             )
+
+            // Botão de voltar flutuante, fixo no canto superior esquerdo
+            // (não rola junto com o conteúdo, porque está fora do
+            // LazyColumn, direto no Box).
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color(0x99000000))
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ArrowBack,
+                    contentDescription = "Voltar",
+                    tint = Color.White
+                )
+            }
         }
     }
 }
