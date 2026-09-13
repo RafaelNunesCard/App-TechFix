@@ -84,6 +84,7 @@ fun HomeScreen(
     onCategoryClick: (String) -> Unit = {},
     onProfessionalClick: (String) -> Unit = {},
     onNavItemSelected: (HomeNavItem) -> Unit = {}
+    onAboutClick: () -> Unit = {}
 ) {
     var selectedNavItem by remember { mutableStateOf(HomeNavItem.HOME) }
 
@@ -95,12 +96,11 @@ fun HomeScreen(
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 20.dp)
             ) {
                 item {
-                    HomeHeader(userFirstName = userFirstName)
+                    HomeHeader(userFirstName = userFirstName, onAboutClick = onAboutClick)
                     Spacer(modifier = Modifier.height(20.dp))
                     SearchBar(onClick = onSearchClick)
                     Spacer(modifier = Modifier.height(24.dp))
                 }
-
                 item {
                     Text(
                         text = "Categorias",
@@ -155,7 +155,7 @@ enum class HomeNavItem { HOME, EXPLORE, ORDERS, PROFILE }
 // =========================================================================================
 
 @Composable
-private fun HomeHeader(userFirstName: String) {
+private fun HomeHeader(userFirstName: String, onAboutClick: () -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -176,20 +176,40 @@ private fun HomeHeader(userFirstName: String) {
             )
         }
 
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(CardDark)
-                .border(BorderStroke(1.dp, CardBorderIdle), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Notifications,
-                contentDescription = "Notificações",
-                tint = TextPrimary,
-                modifier = Modifier.size(18.dp)
-            )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Ícone pro Sobre Nós
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(CardDark)
+                    .border(BorderStroke(1.dp, CardBorderIdle), CircleShape)
+                    .clickable { onAboutClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = "Sobre Nós",
+                    tint = TextPrimary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(CardDark)
+                    .border(BorderStroke(1.dp, CardBorderIdle), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Notificações",
+                    tint = TextPrimary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
