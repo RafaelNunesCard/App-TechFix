@@ -60,6 +60,7 @@ dependencies {
 
     // ---- Necessário para o NavHost/rememberNavController no MainActivity ----
     implementation("androidx.navigation:navigation-compose:2.8.0")
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
