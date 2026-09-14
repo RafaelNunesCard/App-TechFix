@@ -24,6 +24,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
+import com.example.techfix.model.SampleData
+import com.example.techfix.model.UserProfile
 import com.example.techfix.ui.auth.AuthUiState
 import com.example.techfix.ui.auth.AuthViewModel
 import com.example.techfix.ui.auth.LoginScreen
@@ -42,6 +44,8 @@ import com.example.techfix.ui.onboarding.professional.ProSpecialtiesScreen
 import com.example.techfix.ui.onboarding.professional.ProWorkDetails
 import com.example.techfix.ui.onboarding.professional.ProWorkDetailsScreen
 import com.example.techfix.ui.about.AboutScreen
+import com.example.techfix.ui.profile.EditProfileScreen
+import com.example.techfix.ui.profile.ProfileScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,6 +91,10 @@ private object Routes {
     const val PRO_PROFILE_READY = "pro_profile_ready"
 
     const val HOME = "home"
+
+    // Perfil do usuário (nova adição)
+    const val PROFILE = "profile"
+    const val EDIT_PROFILE = "edit_profile"
 }
 
 private val categoryLabels = mapOf(
@@ -143,6 +151,12 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     var proSelectedSpecialties by remember { mutableStateOf(setOf<String>()) }
     var proWorkDetails by remember { mutableStateOf<ProWorkDetails?>(null) }
     var proProfileInfo by remember { mutableStateOf<ProProfileInfo?>(null) }
+
+    // Perfil do usuário exibido/editado nas telas de Perfil.
+    // TODO: trocar SampleData.carlosProfile pelos dados reais vindos do
+    // UserDao/TechFixDatabase (ou do que for coletado no onboarding) assim
+    // que existir uma fonte de dados real pra isso.
+    var userProfile by remember { mutableStateOf(SampleData.carlosProfile) }
 
     NavHost(
         navController = navController,
@@ -318,7 +332,6 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         // ---------------- App ----------------
-                // ---------------- App ----------------
         composable(Routes.HOME) {
             val firstName = loggedInFullName.trim()
                 .split(" ")
@@ -328,11 +341,38 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             HomeScreen(
                 userFirstName = firstName,
                 onAboutClick = { navController.navigate(Routes.ABOUT) }
+                // TODO: se/quando o HomeScreen tiver um botão/ícone de perfil,
+                // adicione o parâmetro onProfileClick = { navController.navigate(Routes.PROFILE) }
+                // aqui e no HomeScreen.kt.
             )
         }
 
         composable(Routes.ABOUT) {
             AboutScreen(onBack = { navController.popBackStack() })
+        }
+
+        // ---------------- Perfil (nova adição) ----------------
+        composable(Routes.PROFILE) {
+            ProfileScreen(
+                profile = userProfile,
+                onMenuClick = { /* TODO: abrir drawer/menu, se existir */ },
+                onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
+                onRequestServiceClick = { /* TODO: navegar para solicitação de serviço */ },
+                onSeeAllHistoryClick = { /* TODO: navegar para histórico completo */ }
+            )
+        }
+
+        composable(Routes.EDIT_PROFILE) {
+            EditProfileScreen(
+                initialProfile = userProfile,
+                onBackClick = { navController.popBackStack() },
+                onCancel = { navController.popBackStack() },
+                onSave = { updatedProfile ->
+                    userProfile = updatedProfile
+                    navController.popBackStack()
+                },
+                onChangePhotoClick = { /* TODO: abrir seletor de imagem */ }
+            )
         }
     }
 }
