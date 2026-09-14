@@ -68,15 +68,15 @@ fun ProfileScreen(
 
             item {
                 TechFixCard {
-                    Text("Sobre Mim", style = MaterialTheme.typography.titleLarge)
+                    Text("Sobre Mim", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
-                    Text(profile.bio, style = MaterialTheme.typography.bodyLarge, color = TechFixTextSecondary)
+                    Text(profile.bio, style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.7f))
                 }
             }
 
             item {
                 TechFixCard {
-                    Text("Categorias de Interesse", style = MaterialTheme.typography.titleLarge)
+                    Text("Categorias de Interesse", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(12.dp))
                     FlowRowChips(items = profile.interestCategories)
                 }
@@ -84,7 +84,7 @@ fun ProfileScreen(
 
             item {
                 TechFixCard {
-                    Text("Preferências de Atendimento", style = MaterialTheme.typography.titleLarge)
+                    Text("Preferências de Atendimento", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(6.dp))
                     profile.preferences.forEach { PreferenceRow(it) }
                 }
@@ -97,7 +97,7 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Indicador de Confiança", style = MaterialTheme.typography.titleLarge)
+                        Text("Indicador de Confiança", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                         Surface(color = TechFixGreenBg, shape = RoundedCornerShape(50)) {
                             Text(
                                 profile.loyaltyLabel,
@@ -110,8 +110,8 @@ fun ProfileScreen(
                     }
                     Spacer(Modifier.height(14.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Fidelidade", style = MaterialTheme.typography.bodyMedium)
-                        Text("${profile.loyaltyPercent}%", style = MaterialTheme.typography.labelLarge)
+                        Text("Fidelidade", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.6f))
+                        Text("${profile.loyaltyPercent}%", style = MaterialTheme.typography.labelLarge, color = Color.White)
                     }
                     Spacer(Modifier.height(6.dp))
                     TechFixProgressBar(progress = profile.loyaltyPercent)
@@ -124,7 +124,7 @@ fun ProfileScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Histórico de Serviços", style = MaterialTheme.typography.titleLarge)
+                    Text("Histórico de Serviços", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                     Text(
                         "Ver todos",
                         color = TechFixAccentSolid,
@@ -144,6 +144,7 @@ fun ProfileScreen(
                 Text(
                     "TechFix • Suporte Especializado • CNPJ 12.345.678/0001-90",
                     style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.4f),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
@@ -195,7 +196,7 @@ private fun ProfileHeaderCard(
             )
 
             Spacer(Modifier.height(12.dp))
-            Text(profile.name, style = MaterialTheme.typography.headlineSmall)
+            Text(profile.name, style = MaterialTheme.typography.headlineSmall, color = Color.White, fontWeight = FontWeight.Bold)
 
             if (profile.isVerified) {
                 Spacer(Modifier.height(4.dp))
@@ -222,7 +223,8 @@ private fun ProfileHeaderCard(
                 Spacer(Modifier.width(4.dp))
                 Text(
                     "${profile.location}  •  ${profile.memberSince}",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.55f)
                 )
             }
 
@@ -232,7 +234,7 @@ private fun ProfileHeaderCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50)
             ) {
-                Text("Editar Perfil")
+                Text("Editar Perfil", color = Color.White)
             }
 
             Spacer(Modifier.height(10.dp))
@@ -292,4 +294,3 @@ private fun FlowRowChips(items: List<String>, itemsPerRow: Int = 3) {
         }
     }
 }
-

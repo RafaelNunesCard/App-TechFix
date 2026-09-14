@@ -83,7 +83,7 @@ fun HomeScreen(
     onSearchClick: () -> Unit = {},
     onCategoryClick: (String) -> Unit = {},
     onProfessionalClick: (String) -> Unit = {},
-    onNavItemSelected: (HomeNavItem) -> Unit = {}
+    onNavItemSelected: (HomeNavItem) -> Unit = {},
     onAboutClick: () -> Unit = {}
 ) {
     var selectedNavItem by remember { mutableStateOf(HomeNavItem.HOME) }

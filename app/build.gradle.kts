@@ -1,4 +1,4 @@
-    plugins {
+plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
@@ -40,6 +40,7 @@ dependencies {
     // ---- Compose BOM: só UMA declaração, vinda do catálogo de versões ----
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
     implementation("androidx.room:room-runtime:2.8.4")
     implementation("androidx.room:room-ktx:2.8.4")

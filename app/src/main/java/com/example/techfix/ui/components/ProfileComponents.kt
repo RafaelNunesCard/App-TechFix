@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,7 +38,7 @@ fun TechFixCard(
 /** Um dos três indicadores no topo do perfil: Concluídos / Avaliação / Confiança. */
 @Composable
 fun StatPill(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     iconTint: Color,
     label: String,
     value: String,
@@ -58,11 +59,11 @@ fun StatPill(
                 Text(
                     label.uppercase(),
                     style = MaterialTheme.typography.bodySmall,
-                    color = TechFixTextTertiary
+                    color = Color.White.copy(alpha = 0.5f)
                 )
             }
             Spacer(Modifier.height(6.dp))
-            Text(value, style = MaterialTheme.typography.titleLarge)
+            Text(value, style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -77,7 +78,7 @@ fun InterestChip(text: String) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = TechFixTextPrimary,
+            color = Color.White.copy(alpha = 0.85f),
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
         )
     }
@@ -97,7 +98,7 @@ fun PreferenceRow(text: String) {
                 .background(TechFixAccentSolid)
         )
         Spacer(Modifier.width(12.dp))
-        Text(text, style = MaterialTheme.typography.bodyLarge, fontSize = 14.sp)
+        Text(text, style = MaterialTheme.typography.bodyLarge, fontSize = 14.sp, color = Color.White.copy(alpha = 0.85f))
     }
 }
 
@@ -161,16 +162,17 @@ fun ServiceHistoryCard(item: ServiceHistoryItem, modifier: Modifier = Modifier) 
                 Icon(
                     Icons.Filled.Devices,
                     contentDescription = null,
-                    tint = TechFixTextSecondary,
+                    tint = Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.size(20.dp)
                 )
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(item.deviceName, style = MaterialTheme.typography.titleMedium)
+                Text(item.deviceName, style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
                 Text(
                     item.description,
                     style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.6f),
                     maxLines = 2
                 )
             }
@@ -182,7 +184,7 @@ fun ServiceHistoryCard(item: ServiceHistoryItem, modifier: Modifier = Modifier) 
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Status do Serviço", style = MaterialTheme.typography.bodyMedium)
+            Text("Status do Serviço", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.6f))
             StatusBadge(item.status)
         }
 
@@ -191,10 +193,11 @@ fun ServiceHistoryCard(item: ServiceHistoryItem, modifier: Modifier = Modifier) 
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Progresso", style = MaterialTheme.typography.bodyMedium)
+            Text("Progresso", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.6f))
             Text(
                 "${item.progress}%",
-                style = MaterialTheme.typography.labelLarge
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.White
             )
         }
         Spacer(Modifier.height(6.dp))
@@ -206,12 +209,12 @@ fun ServiceHistoryCard(item: ServiceHistoryItem, modifier: Modifier = Modifier) 
         Spacer(Modifier.height(14.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Column {
-                Text(item.dateLabel, style = MaterialTheme.typography.bodySmall)
-                Text(item.date, style = MaterialTheme.typography.labelLarge, fontSize = 13.sp)
+                Text(item.dateLabel, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.5f))
+                Text(item.date, style = MaterialTheme.typography.labelLarge, fontSize = 13.sp, color = Color.White.copy(alpha = 0.85f))
             }
             if (item.warranty != null) {
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("GARANTIA TÉCNICA", style = MaterialTheme.typography.bodySmall)
+                    Text("GARANTIA TÉCNICA", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.5f))
                     Text(
                         item.warranty,
                         color = TechFixGreen,

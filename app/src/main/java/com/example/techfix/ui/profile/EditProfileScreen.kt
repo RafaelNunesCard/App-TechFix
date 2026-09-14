@@ -35,8 +35,14 @@ import com.example.techfix.ui.theme.*
 fun EditProfileScreen(
     initialProfile: UserProfile = SampleData.carlosProfile,
     allInterestOptions: List<String> = listOf(
-        "Reparo de Notebooks", "Troca de Tela", "Upgrade", "Preventiva",
-        "Dados", "Redes", "Software", "Hardware"
+        "Reparo de Notebooks",
+        "Troca de Tela",
+        "Upgrade",
+        "Preventiva",
+        "Dados",
+        "Redes",
+        "Software",
+        "Hardware"
     ),
     onBackClick: () -> Unit = {},
     onSave: (UserProfile) -> Unit = {},
@@ -46,11 +52,12 @@ fun EditProfileScreen(
     var name by remember { mutableStateOf(initialProfile.name) }
     var location by remember { mutableStateOf(initialProfile.location) }
     var bio by remember { mutableStateOf(initialProfile.bio) }
+
     val selectedInterests = remember {
         mutableStateListOf(*initialProfile.interestCategories.toTypedArray())
     }
 
-    // Preferências como toggles (switch). Convertendo a lista fixa em pares (texto -> estado).
+    // Preferências como toggles (switch).
     val preferenceStates = remember {
         mutableStateMapOf<String, Boolean>().apply {
             listOf(
@@ -68,16 +75,29 @@ fun EditProfileScreen(
         containerColor = TechFixBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Editar Perfil", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "Editar Perfil",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Voltar", tint = TechFixTextPrimary)
+                        Icon(
+                            Icons.Filled.ArrowBack,
+                            contentDescription = "Voltar",
+                            tint = TechFixTextPrimary
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = TechFixBackground)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = TechFixBackground
+                )
             )
         }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -86,6 +106,7 @@ fun EditProfileScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
             Spacer(Modifier.height(4.dp))
 
             // Avatar editável
@@ -93,7 +114,9 @@ fun EditProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
                 Box(contentAlignment = Alignment.BottomEnd) {
+
                     AsyncImage(
                         model = initialProfile.avatarUrl,
                         contentDescription = "Foto de perfil",
@@ -103,6 +126,7 @@ fun EditProfileScreen(
                             .clip(CircleShape)
                             .background(TechFixSurfaceVariant)
                     )
+
                     Box(
                         modifier = Modifier
                             .size(30.dp)
@@ -119,9 +143,11 @@ fun EditProfileScreen(
                         )
                     }
                 }
+
                 Spacer(Modifier.height(8.dp))
+
                 Text(
-                    "Alterar foto",
+                    text = "Alterar foto",
                     color = TechFixAccentSolid,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -131,10 +157,24 @@ fun EditProfileScreen(
 
             // Dados básicos
             TechFixCard {
-                Text("Dados Básicos", style = MaterialTheme.typography.titleLarge)
+
+                Text(
+                    text = "Dados Básicos",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+
                 Spacer(Modifier.height(12.dp))
-                TechFixTextField(label = "Nome completo", value = name, onValueChange = { name = it })
+
+                TechFixTextField(
+                    label = "Nome completo",
+                    value = name,
+                    onValueChange = { name = it }
+                )
+
                 Spacer(Modifier.height(12.dp))
+
                 TechFixTextField(
                     label = "Localização",
                     value = location,
@@ -145,8 +185,16 @@ fun EditProfileScreen(
 
             // Sobre mim
             TechFixCard {
-                Text("Sobre Mim", style = MaterialTheme.typography.titleLarge)
+
+                Text(
+                    text = "Sobre Mim",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+
                 Spacer(Modifier.height(12.dp))
+
                 TechFixTextField(
                     label = "Conte um pouco sobre você",
                     value = bio,
@@ -156,30 +204,53 @@ fun EditProfileScreen(
                 )
             }
 
-            // Categorias de interesse (seleção múltipla)
+            // Categorias de interesse
             TechFixCard {
-                Text("Categorias de Interesse", style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(4.dp))
+
                 Text(
-                    "Toque para selecionar ou remover",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Categorias de Interesse",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
                 )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = "Toque para selecionar ou remover",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.5f)
+                )
+
                 Spacer(Modifier.height(12.dp))
+
                 SelectableChipsFlow(
                     options = allInterestOptions,
                     selected = selectedInterests,
                     onToggle = { option ->
-                        if (selectedInterests.contains(option)) selectedInterests.remove(option)
-                        else selectedInterests.add(option)
+                        if (selectedInterests.contains(option)) {
+                            selectedInterests.remove(option)
+                        } else {
+                            selectedInterests.add(option)
+                        }
                     }
                 )
             }
 
-            // Preferências de atendimento (switches)
+            // Preferências de atendimento
             TechFixCard {
-                Text("Preferências de Atendimento", style = MaterialTheme.typography.titleLarge)
+
+                Text(
+                    text = "Preferências de Atendimento",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+
                 Spacer(Modifier.height(8.dp))
+
                 preferenceStates.keys.toList().forEach { pref ->
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -187,10 +258,20 @@ fun EditProfileScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(pref, style = MaterialTheme.typography.bodyLarge, fontSize = 14.sp, modifier = Modifier.weight(1f))
+
+                        Text(
+                            text = pref,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 14.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+
                         Switch(
                             checked = preferenceStates[pref] == true,
-                            onCheckedChange = { preferenceStates[pref] = it },
+                            onCheckedChange = {
+                                preferenceStates[pref] = it
+                            },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = TechFixAccentSolid,
@@ -204,28 +285,44 @@ fun EditProfileScreen(
             // Ações
             Button(
                 onClick = {
+
                     val updated = initialProfile.copy(
                         name = name,
                         location = location,
                         bio = bio,
                         interestCategories = selectedInterests.toList(),
-                        preferences = preferenceStates.filterValues { it }.keys.toList()
+                        preferences = preferenceStates
+                            .filterValues { it }
+                            .keys
+                            .toList()
                     )
+
                     onSave(updated)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(containerColor = TechFixAccentSolid)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TechFixAccentSolid
+                )
             ) {
-                Text("Salvar Alterações")
+                Text(
+                    text = "Salvar Alterações",
+                    color = Color.White
+                )
             }
 
             OutlinedButton(
                 onClick = onCancel,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(50)
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color.White
+                )
             ) {
-                Text("Cancelar")
+                Text(
+                    text = "Cancelar",
+                    color = Color.White
+                )
             }
 
             Spacer(Modifier.height(16.dp))
@@ -245,26 +342,46 @@ private fun TechFixTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        leadingIcon = leadingIcon?.let { icon ->
-            { Icon(icon, contentDescription = null, tint = TechFixTextTertiary) }
+
+        label = {
+            Text(
+                text = label
+            )
         },
+
+        leadingIcon = leadingIcon?.let { icon ->
+            {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = TechFixTextTertiary
+                )
+            }
+        },
+
         singleLine = singleLine,
         minLines = minLines,
+
         modifier = Modifier.fillMaxWidth(),
+
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = TechFixAccentSolid,
             unfocusedBorderColor = TechFixDivider,
+
             focusedLabelColor = TechFixAccentSolid,
-            unfocusedLabelColor = TechFixTextTertiary,
-            focusedTextColor = TechFixTextPrimary,
-            unfocusedTextColor = TechFixTextPrimary,
+            unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+
             cursorColor = TechFixAccentSolid
         )
     )
 }
 
-/** Chips seletíveis (toca para marcar/desmarcar) usados na edição de categorias. */
+/**
+ * Chips seletíveis usados na edição de categorias.
+ */
 @Composable
 private fun SelectableChipsFlow(
     options: List<String>,
@@ -272,33 +389,62 @@ private fun SelectableChipsFlow(
     onToggle: (String) -> Unit,
     itemsPerRow: Int = 2
 ) {
+
     val chunks = options.chunked(itemsPerRow)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+
         chunks.forEach { rowItems ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
                 rowItems.forEach { option ->
+
                     val isSelected = selected.contains(option)
+
                     Surface(
-                        color = if (isSelected) TechFixAccentSolid else TechFixChipBackground,
+                        color = if (isSelected) {
+                            TechFixAccentSolid
+                        } else {
+                            TechFixChipBackground
+                        },
                         shape = RoundedCornerShape(50),
-                        modifier = Modifier.clickable { onToggle(option) }
+                        modifier = Modifier.clickable {
+                            onToggle(option)
+                        }
                     ) {
+
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                            modifier = Modifier.padding(
+                                horizontal = 14.dp,
+                                vertical = 8.dp
+                            )
                         ) {
+
                             if (isSelected) {
+
                                 Icon(
                                     Icons.Filled.Check,
                                     contentDescription = null,
                                     tint = Color.White,
                                     modifier = Modifier.size(14.dp)
                                 )
+
                                 Spacer(Modifier.width(4.dp))
                             }
+
                             Text(
-                                option,
-                                color = if (isSelected) Color.White else TechFixTextPrimary,
+                                text = option,
+                                color = if (isSelected) {
+                                    Color.White
+                                } else {
+                                    Color.White.copy(alpha = 0.75f)
+                                },
                                 fontSize = 13.sp
                             )
                         }

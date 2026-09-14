@@ -30,6 +30,7 @@ import com.example.techfix.ui.auth.AuthUiState
 import com.example.techfix.ui.auth.AuthViewModel
 import com.example.techfix.ui.auth.LoginScreen
 import com.example.techfix.ui.auth.SignUpBasicInfoScreen
+import com.example.techfix.ui.home.HomeNavItem
 import com.example.techfix.ui.home.HomeScreen
 import com.example.techfix.ui.onboarding.CategorySelectionScreen
 import com.example.techfix.ui.onboarding.MatchPriorityScreen
@@ -46,6 +47,9 @@ import com.example.techfix.ui.onboarding.professional.ProWorkDetailsScreen
 import com.example.techfix.ui.about.AboutScreen
 import com.example.techfix.ui.profile.EditProfileScreen
 import com.example.techfix.ui.profile.ProfileScreen
+import com.example.techfix.ui.orders.OrdersScreen
+import com.example.produtos.ui.explore.ProdutoScreen
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,6 +95,10 @@ private object Routes {
     const val PRO_PROFILE_READY = "pro_profile_ready"
 
     const val HOME = "home"
+
+    // Barra inferior da Home (nova adição)
+    const val EXPLORE = "explore"
+    const val ORDERS = "orders"
 
     // Perfil do usuário (nova adição)
     const val PROFILE = "profile"
@@ -340,15 +348,64 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
 
             HomeScreen(
                 userFirstName = firstName,
-                onAboutClick = { navController.navigate(Routes.ABOUT) }
-                // TODO: se/quando o HomeScreen tiver um botão/ícone de perfil,
-                // adicione o parâmetro onProfileClick = { navController.navigate(Routes.PROFILE) }
-                // aqui e no HomeScreen.kt.
+                onAboutClick = { navController.navigate(Routes.ABOUT) },
+                onNavItemSelected = { item ->
+                    when (item) {
+                        HomeNavItem.HOME -> Unit
+                        HomeNavItem.EXPLORE -> navController.navigate(Routes.EXPLORE)
+                        HomeNavItem.ORDERS -> navController.navigate(Routes.ORDERS)
+                        HomeNavItem.PROFILE -> navController.navigate(Routes.PROFILE)
+                    }
+                }
             )
         }
 
         composable(Routes.ABOUT) {
             AboutScreen(onBack = { navController.popBackStack() })
+        }
+
+        // ---------------- Barra inferior da Home (nova adição) ----------------
+        composable(Routes.EXPLORE) {
+            ProdutoScreen(
+                onHomeClick = {
+                    navController.navigate(Routes.HOME) {
+                        launchSingleTop = true
+                    }
+                },
+                onServicesClick = {
+                    // Já está na tela de serviços
+                }
+            )
+        }
+
+        composable(Routes.ORDERS) {
+            OrdersScreen(
+                onOrderClick = { orderId ->
+                    // Futuramente:
+                    // navController.navigate("order_detail/$orderId")
+                },
+                onNavItemSelected = { item ->
+                    when (item) {
+                        HomeNavItem.HOME -> {
+                            navController.navigate(Routes.HOME) {
+                                popUpTo(Routes.HOME)
+                            }
+                        }
+
+                        HomeNavItem.EXPLORE -> {
+                            navController.navigate(Routes.EXPLORE)
+                        }
+
+                        HomeNavItem.ORDERS -> {
+                            // Já estamos em Pedidos
+                        }
+
+                        HomeNavItem.PROFILE -> {
+                            navController.navigate(Routes.PROFILE)
+                        }
+                    }
+                }
+            )
         }
 
         // ---------------- Perfil (nova adição) ----------------
