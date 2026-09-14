@@ -24,6 +24,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.produtos.ui.explore.ProdutoNavItem
+import androidx.core.view.WindowCompat
 
 import com.example.techfix.model.SampleData
 import com.example.techfix.model.UserProfile
@@ -55,6 +57,7 @@ import com.example.produtos.ui.explore.ProdutoScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
         enableEdgeToEdge()
         setContent {
             TechFixTheme {
@@ -380,18 +383,32 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         // ---------------- Barra inferior da Home (nova adição) ----------------
-        composable(Routes.EXPLORE) {
-            ProdutoScreen(
-                onHomeClick = {
-                    navController.navigate(Routes.HOME) {
-                        launchSingleTop = true
-                    }
-                },
-                onServicesClick = {
-                    // Já está na tela de serviços
-                }
-            )
-        }
+           composable(Routes.EXPLORE) {
+               ProdutoScreen(
+                   onNavItemSelected = { item ->
+                       when (item) {
+                           ProdutoNavItem.HOME -> {
+                               navController.navigate(Routes.HOME) {
+                                   launchSingleTop = true
+                               }
+                           }
+                           ProdutoNavItem.EXPLORE -> {
+                               // Já está na tela de explorar/serviços, não precisa navegar
+                           }
+                           ProdutoNavItem.ORDERS -> {
+                               navController.navigate(Routes.ORDERS) { // Ajuste para a rota de pedidos do seu app
+                                   launchSingleTop = true
+                               }
+                           }
+                           ProdutoNavItem.PROFILE -> {
+                               navController.navigate(Routes.PROFILE) { // Ajuste para a rota de perfil do seu app
+                                   launchSingleTop = true
+                               }
+                           }
+                       }
+                   }
+               )
+           }
 
         composable(Routes.ORDERS) {
             OrdersScreen(
