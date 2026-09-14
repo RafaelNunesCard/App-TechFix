@@ -1,5 +1,6 @@
 package com.example.techfix
 
+import com.example.techfix.ui.splash.SplashScreen
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -77,6 +78,7 @@ fun TechFixTheme(content: @Composable () -> Unit) {
 }
 
 private object Routes {
+    const val SPLASH = "splash"
     const val LOGIN = "login"
     const val SIGN_UP = "sign_up"
     const val PATHWAY = "pathway"
@@ -166,10 +168,23 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     // que existir uma fonte de dados real pra isso.
     var userProfile by remember { mutableStateOf(SampleData.carlosProfile) }
 
-    NavHost(
+       NavHost(
         navController = navController,
-        startDestination = Routes.LOGIN
+        startDestination = Routes.SPLASH
     ) {
+        composable(Routes.SPLASH) {
+            SplashScreen(
+                onFinished = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.SPLASH) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
         // ---------------- Auth ----------------
         composable(Routes.LOGIN) {
             val authViewModel: AuthViewModel = viewModel()
