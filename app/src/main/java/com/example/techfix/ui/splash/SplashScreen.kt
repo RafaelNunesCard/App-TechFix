@@ -1,5 +1,7 @@
 package com.example.techfix.ui.splash
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,18 +26,38 @@ import kotlinx.coroutines.delay
 fun SplashScreen(onFinished: () -> Unit) {
     val currentOnFinished by rememberUpdatedState(onFinished)
 
-    // Aguarda sem travar a interface.
-    // Não reinicia a espera a cada atualização visual da tela.
+    // Progresso visual da barra.
+    var progress by remember { mutableFloatStateOf(0f) }
+
+    // Anima a barra de 0% até 100% em 2 segundos.
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(
+            durationMillis = 2_000
+        ),
+        label = "splash_progress"
+    )
+
     LaunchedEffect(Unit) {
+        // Inicia o carregamento.
+        progress = 1f
+
+        // Aguarda o mesmo tempo da animação.
         delay(2_000L)
+
+        // Navega para a próxima tela.
         currentOnFinished()
     }
 
-    SplashContent()
+    SplashContent(
+        progress = animatedProgress
+    )
 }
 
 @Composable
-private fun SplashContent() {
+private fun SplashContent(
+    progress: Float = 0f
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -97,8 +119,7 @@ private fun SplashContent() {
                     .align(Alignment.TopCenter)
                     .offset(y = screenHeight * 0.77f)
             ) {
-                // Barra decorativa estática, como no design.
-                // Não representa uma porcentagem real de carregamento.
+                // Barra de carregamento.
                 Box(
                     modifier = Modifier
                         .width(110.dp)
@@ -108,7 +129,7 @@ private fun SplashContent() {
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(0.5f)
+                            .fillMaxWidth(progress)
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(50))
                             .background(
@@ -126,7 +147,11 @@ private fun SplashContent() {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Carregando...",
+                    text = if (progress >= 1f) {
+                        "Concluído!"
+                    } else {
+                        "Carregando..."
+                    },
                     color = Color(0xFF999999),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
@@ -136,9 +161,13 @@ private fun SplashContent() {
     }
 }
 
-// Prévia visual sem executar a espera ou a navegação.
-@Preview(showBackground = true, widthDp = 360, heightDp = 800)
+// Prévia visual.
+@Preview(
+    showBackground = true,
+    widthDp = 360,
+    heightDp = 800
+)
 @Composable
 private fun SplashScreenPreview() {
-    SplashContent()
+    SplashContent(progress = 0.5f)
 }
