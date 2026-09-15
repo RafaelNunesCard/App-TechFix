@@ -30,9 +30,12 @@ import androidx.core.view.WindowCompat
 import kotlinx.coroutines.launch
 
 import com.example.techfix.data.OnboardingRepository
+import com.example.techfix.data.UserSession
 import com.example.techfix.data.local.TechFixDatabase
-import com.example.techfix.model.SampleData
 import com.example.techfix.model.UserProfile
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.example.techfix.ui.auth.AuthUiState
 import com.example.techfix.ui.auth.AuthViewModel
 import com.example.techfix.ui.auth.LoginScreen
@@ -151,6 +154,45 @@ private fun availabilityLabel(dayIds: Set<String>): String {
     }
 }
 
+
+/**
+ * Monta um UserProfile de verdade a partir do usuário logado, com
+ * valores de "conta nova" nos campos que ainda não têm dado real
+ * (0 serviços concluídos, sem nota, sem foto) — em vez de usar o
+ * perfil fictício do Carlos Eduardo (SampleData.carlosProfile).
+ */
+private fun buildUserProfile(
+    fullName: String,
+    createdAtMillis: Long,
+    interestCategories: List<String>
+): UserProfile {
+    val memberSinceLabel = try {
+        val formatted = SimpleDateFormat("MMMM 'de' yyyy", Locale("pt", "BR"))
+            .format(Date(createdAtMillis))
+            .replaceFirstChar { it.uppercase() }
+        "Membro desde $formatted"
+    } catch (e: Exception) {
+        "Membro recente"
+    }
+
+    return UserProfile(
+        name = fullName,
+        avatarUrl = "",
+        isVerified = false,
+        location = "",
+        memberSince = memberSinceLabel,
+        completedServices = 0,
+        rating = 0.0,
+        confidencePercent = 0,
+        bio = "",
+        interestCategories = interestCategories,
+        preferences = emptyList(),
+        loyaltyLabel = "Novo por aqui",
+        loyaltyPercent = 0,
+        serviceHistory = emptyList()
+    )
+}
+
 @Composable
 fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     val context = LocalContext.current
@@ -181,10 +223,12 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     var proProfileInfo by remember { mutableStateOf<ProProfileInfo?>(null) }
 
     // Perfil do usuário exibido/editado nas telas de Perfil.
-    // TODO: trocar SampleData.carlosProfile pelos dados reais vindos do
-    // UserDao/TechFixDatabase (ou do que for coletado no onboarding) assim
-    // que existir uma fonte de dados real pra isso.
-    var userProfile by remember { mutableStateOf(SampleData.carlosProfile) }
+    // Começa com um placeholder vazio; assim que o login/cadastro conclui
+    // (ver os blocos LaunchedEffect abaixo), é substituído pelos dados
+    // reais de quem está logado.
+    var userProfile by remember {
+        mutableStateOf(buildUserProfile(fullName = "", createdAtMillis = System.currentTimeMillis(), interestCategories = emptyList()))
+    }
 
        NavHost(
         navController = navController,
@@ -213,6 +257,27 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                     is AuthUiState.LoggedIn -> {
                         loggedInFullName = state.fullName
                         loggedInEmail = state.email
+
+                        // Monta o perfil real (nome + data de criação da conta
+                        // vêm do UserSession, preenchido pelo AuthViewModel).
+                        val user = UserSession.currentUser
+                        userProfile = buildUserProfile(
+                            fullName = state.fullName,
+                            createdAtMillis = user?.createdAt ?: System.currentTimeMillis(),
+                            interestCategories = emptyList()
+                        )
+                        // Em paralelo, busca no Room se esse usuário já tem
+                        // interesses salvos de um onboarding anterior, e
+                        // completa o perfil assim que a busca terminar.
+                        coroutineScope.launch {
+                            val saved = onboardingRepository.getClientOnboarding(state.email)
+                            if (saved != null) {
+                                userProfile = userProfile.copy(
+                                    interestCategories = saved.selectedCategoryIds.mapNotNull { categoryLabels[it] }
+                                )
+                            }
+                        }
+
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
@@ -243,6 +308,16 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                     is AuthUiState.LoggedIn -> {
                         loggedInFullName = state.fullName
                         loggedInEmail = state.email
+
+                        // Conta acabou de ser criada — ainda não existe
+                        // onboarding salvo, então o perfil nasce "zerado".
+                        val user = UserSession.currentUser
+                        userProfile = buildUserProfile(
+                            fullName = state.fullName,
+                            createdAtMillis = user?.createdAt ?: System.currentTimeMillis(),
+                            interestCategories = emptyList()
+                        )
+
                         navController.navigate(Routes.PATHWAY)
                         authViewModel.resetState()
                     }
