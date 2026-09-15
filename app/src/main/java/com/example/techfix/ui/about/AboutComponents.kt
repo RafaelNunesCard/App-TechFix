@@ -31,6 +31,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import androidx.compose.runtime.getValue
 
 // ---- Design tokens só da página "Sobre Nós" (cores do Figma) ----
 val AboutBackgroundDark = Color(0xFF0D0D0D)

@@ -375,7 +375,6 @@ private fun AuthGradientHeader(title: String, subtitle: String) {
             )
         }
     }
-}
 
 @Composable
 private fun SignUpStepProgressBar(totalSteps: Int, currentStep: Int) {

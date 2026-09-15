@@ -5,10 +5,20 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [UserEntity::class], version = 1, exportSchema = false)
+@Database(
+    entities = [
+        UserEntity::class,
+        ClientOnboardingEntity::class,
+        ProfessionalProfileEntity::class
+    ],
+    version = 2, // era 1 — subiu porque adicionamos tabelas novas
+    exportSchema = false
+)
 abstract class TechFixDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDao
+    abstract fun clientOnboardingDao(): ClientOnboardingDao
+    abstract fun professionalProfileDao(): ProfessionalProfileDao
 
     companion object {
         @Volatile
@@ -20,7 +30,13 @@ abstract class TechFixDatabase : RoomDatabase() {
                     context.applicationContext,
                     TechFixDatabase::class.java,
                     "techfix.db"
-                ).build().also { INSTANCE = it }
+                )
+                    // Enquanto não existir migração real, isso evita crash
+                    // ao mudar o version — mas apaga os dados salvos no
+                    // emulador/dispositivo a cada bump de versão.
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    .also { INSTANCE = it }
             }
         }
     }
