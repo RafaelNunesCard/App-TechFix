@@ -51,4 +51,12 @@ class AuthRepository(private val userDao: UserDao) {
             AuthResult.Failure("E-mail ou senha incorretos.")
         }
     }
+
+    /**
+     * Busca um usuário só pelo email, sem senha — usada para RESTAURAR
+     * uma sessão salva (SessionManager) quando o app abre de novo,
+     * sem precisar pedir login/senha outra vez.
+     */
+    suspend fun getUserByEmail(email: String): UserEntity? =
+        userDao.findByEmail(email.trim().lowercase())
 }
