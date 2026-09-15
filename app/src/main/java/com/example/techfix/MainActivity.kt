@@ -15,6 +15,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,7 +27,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.produtos.ui.explore.ProdutoNavItem
 import androidx.core.view.WindowCompat
+import kotlinx.coroutines.launch
 
+import com.example.techfix.data.OnboardingRepository
+import com.example.techfix.data.local.TechFixDatabase
 import com.example.techfix.model.SampleData
 import com.example.techfix.model.UserProfile
 import com.example.techfix.ui.auth.AuthUiState
@@ -154,6 +158,17 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     // Held here for now (not persisted). Replace with a real session/profile
     // store once you build one.
     var loggedInFullName by remember { mutableStateOf("") }
+    // NOVO: o email de quem logou — as tabelas de onboarding no Room usam o
+    // email como chave, então precisamos dele aqui pra poder salvar de verdade.
+    var loggedInEmail by remember { mutableStateOf("") }
+
+    // NOVO: ponte entre as telas e as tabelas novas do Room
+    // (client_onboarding / professional_profile).
+    val onboardingRepository = remember { OnboardingRepository(TechFixDatabase.getInstance(context)) }
+    // NOVO: "saveClientOnboarding"/"saveProfessionalProfile" são funções
+    // "suspend" — só podem ser chamadas de dentro de uma corrotina, e é
+    // esse escopo que nos deixa abrir uma a partir de um clique.
+    val coroutineScope = rememberCoroutineScope()
 
     // Client onboarding state
     var selectedCategoryIds by remember { mutableStateOf(setOf<String>()) }
@@ -197,6 +212,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 when (val state = uiState) {
                     is AuthUiState.LoggedIn -> {
                         loggedInFullName = state.fullName
+                        loggedInEmail = state.email
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
@@ -226,6 +242,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 when (val state = uiState) {
                     is AuthUiState.LoggedIn -> {
                         loggedInFullName = state.fullName
+                        loggedInEmail = state.email
                         navController.navigate(Routes.PATHWAY)
                         authViewModel.resetState()
                     }
@@ -284,6 +301,14 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 matchingPriorityLabel = priorityLabels[selectedPriorityId]
                     ?: "Highest Rated Professionals first",
                 onStartExploring = {
+                    // NOVO: salva de verdade no Room antes de ir pra Home.
+                    coroutineScope.launch {
+                        onboardingRepository.saveClientOnboarding(
+                            userEmail = loggedInEmail,
+                            selectedCategoryIds = selectedCategoryIds,
+                            priorityId = selectedPriorityId
+                        )
+                    }
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
@@ -348,8 +373,21 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 availabilityLabel = availabilityLabel(details?.availableDayIds ?: emptySet()),
                 onEditInfo = { navController.popBackStack() },
                 onPublish = {
-                    // TODO: persist the full professional profile (categories,
-                    // specialties, work details, profile info) to your backend.
+                    // NOVO: salva o perfil profissional completo no Room.
+                    coroutineScope.launch {
+                        onboardingRepository.saveProfessionalProfile(
+                            userEmail = loggedInEmail,
+                            serviceCategoryIds = proSelectedCategoryIds,
+                            specialtyIds = proSelectedSpecialties,
+                            experienceLevel = details?.experienceLevel.orEmpty(),
+                            serviceRadiusKm = details?.serviceRadiusKm ?: 15,
+                            availableDayIds = details?.availableDayIds ?: emptySet(),
+                            bio = profile?.shortBio.orEmpty(),
+                            // Ainda não existe upload de foto de verdade
+                            // (é só um TODO na tela) — por isso null aqui.
+                            photoUri = null
+                        )
+                    }
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
