@@ -32,6 +32,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.example.techfix.R
 
 // ---- Design tokens (same palette as the onboarding flow, kept local to this package) ----
 private val ScreenBackground = Color(0xFF121212)
@@ -339,28 +342,18 @@ private fun AuthGradientHeader(title: String, subtitle: String) {
     ) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.logo_techfix),
+                    contentDescription = "TechFix",
                     modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.25f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "🛠", fontSize = 14.sp)
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Row {
-                    Text(
-                        text = "Tech",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                    .height(28.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     )
-                    Text(
-                        text = "Fix",
-                        color = Color.White.copy(alpha = 0.75f),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                Text(
+                    text = "Fix",
+                    color = Color.White.copy(alpha = 0.75f),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
                     )
                 }
             }
