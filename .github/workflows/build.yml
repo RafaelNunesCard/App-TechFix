@@ -1,0 +1,39 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar o Java (o projeto pede a versão 25)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Aceitar as licenças do Android SDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Preparar o Gradle (cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Dar permissão ao gradlew
+        run: chmod +x gradlew
+
+      - name: Compilar o APK de teste
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Guardar o APK para baixar
+        uses: actions/upload-artifact@v4
+        with:
+          name: techfix-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 30
