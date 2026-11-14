@@ -13,7 +13,7 @@ import androidx.room.RoomDatabase
         ServiceOrderEntity::class,
         ProfessionalEntity::class
     ],
-    version = 3, // era 2 — subiu porque adicionamos pedidos e profissionais
+    version = 4, // era 3 — pedidos ganharam descrição, horário e local
     exportSchema = false
 )
 abstract class TechFixDatabase : RoomDatabase() {
