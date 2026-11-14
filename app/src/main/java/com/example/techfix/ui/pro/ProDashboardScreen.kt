@@ -81,7 +81,9 @@ fun ProDashboardScreen(
             it.status == OrderStatus.WAITING_PARTS
     }
     val completed = orders.count { it.status == OrderStatus.COMPLETED }
-    val active = orders.filter { it.status != OrderStatus.COMPLETED }
+    val active = orders.filter {
+        it.status != OrderStatus.COMPLETED && it.status != OrderStatus.CANCELED
+    }
     val firstName = proName.trim().split(" ").firstOrNull().orEmpty().ifBlank { "profissional" }
 
     Surface(modifier = Modifier.fillMaxSize(), color = TechFixBackground) {
@@ -215,12 +217,12 @@ fun ProDashboardScreen(
 }
 
 /** Texto do botão que faz o pedido avançar para a próxima etapa (null = nada a fazer). */
-private fun advanceLabel(status: OrderStatus): String? = when (status) {
+internal fun advanceLabel(status: OrderStatus): String? = when (status) {
     OrderStatus.PENDING -> "Aceitar solicitação"
     OrderStatus.APPROVED -> "Iniciar serviço"
     OrderStatus.IN_PROGRESS -> "Concluir serviço"
     OrderStatus.WAITING_PARTS -> "Retomar serviço"
-    OrderStatus.COMPLETED -> null
+    OrderStatus.COMPLETED, OrderStatus.CANCELED -> null
 }
 
 @Composable
@@ -262,6 +264,7 @@ private fun ReceivedOrderCard(order: ServiceOrder, onAdvance: () -> Unit) {
 private fun StatusChip(status: OrderStatus) {
     val (bg, fg) = when (status) {
         OrderStatus.COMPLETED -> TechFixGreenBg to TechFixGreen
+        OrderStatus.CANCELED -> TechFixChipBackground to TechFixTextTertiary
         OrderStatus.WAITING_PARTS, OrderStatus.PENDING -> TechFixWarningBg to TechFixWarning
         OrderStatus.APPROVED, OrderStatus.IN_PROGRESS -> TechFixAccentSolid.copy(alpha = 0.12f) to TechFixAccentSolid
     }
