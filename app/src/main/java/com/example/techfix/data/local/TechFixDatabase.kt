@@ -9,9 +9,11 @@ import androidx.room.RoomDatabase
     entities = [
         UserEntity::class,
         ClientOnboardingEntity::class,
-        ProfessionalProfileEntity::class
+        ProfessionalProfileEntity::class,
+        ServiceOrderEntity::class,
+        ProfessionalEntity::class
     ],
-    version = 2, // era 1 — subiu porque adicionamos tabelas novas
+    version = 3, // era 2 — subiu porque adicionamos pedidos e profissionais
     exportSchema = false
 )
 abstract class TechFixDatabase : RoomDatabase() {
@@ -19,6 +21,8 @@ abstract class TechFixDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun clientOnboardingDao(): ClientOnboardingDao
     abstract fun professionalProfileDao(): ProfessionalProfileDao
+    abstract fun serviceOrderDao(): ServiceOrderDao
+    abstract fun professionalDao(): ProfessionalDao
 
     companion object {
         @Volatile
