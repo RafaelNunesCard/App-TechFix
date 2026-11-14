@@ -40,6 +40,7 @@ import com.example.techfix.ui.orders.TECHFIX_FEE_CENTS
 import com.example.techfix.ui.orders.formatCents
 import com.example.techfix.ui.theme.TechFixAccentBrush
 import com.example.techfix.ui.theme.TechFixBackground
+import com.example.techfix.ui.theme.TechFixChipBackground
 import com.example.techfix.ui.theme.TechFixGreen
 import com.example.techfix.ui.theme.TechFixRed
 import com.example.techfix.ui.theme.TechFixRedBg
@@ -59,7 +60,8 @@ fun ProRequestDetailScreen(
     detail: OrderDetail?,
     onBack: () -> Unit,
     onAdvance: () -> Unit,
-    onRefuse: () -> Unit
+    onRefuse: () -> Unit,
+    onOpenChat: () -> Unit
 ) {
     var showRefuse by remember { mutableStateOf(false) }
     var reason by remember { mutableStateOf(refuseReasons.first()) }
@@ -156,6 +158,17 @@ fun ProRequestDetailScreen(
                             fontWeight = FontWeight.Bold
                         )
                     }
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(TechFixChipBackground)
+                        .clickable(onClick = onOpenChat),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Enviar mensagem ao cliente", color = TechFixTextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(8.dp))
             }
