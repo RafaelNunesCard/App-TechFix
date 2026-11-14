@@ -11,9 +11,10 @@ import androidx.room.RoomDatabase
         ClientOnboardingEntity::class,
         ProfessionalProfileEntity::class,
         ServiceOrderEntity::class,
-        ProfessionalEntity::class
+        ProfessionalEntity::class,
+        ChatMessageEntity::class
     ],
-    version = 4, // era 3 — pedidos ganharam descrição, horário e local
+    version = 5, // era 4 — adicionamos as mensagens do chat
     exportSchema = false
 )
 abstract class TechFixDatabase : RoomDatabase() {
@@ -23,6 +24,7 @@ abstract class TechFixDatabase : RoomDatabase() {
     abstract fun professionalProfileDao(): ProfessionalProfileDao
     abstract fun serviceOrderDao(): ServiceOrderDao
     abstract fun professionalDao(): ProfessionalDao
+    abstract fun chatMessageDao(): ChatMessageDao
 
     companion object {
         @Volatile
