@@ -53,6 +53,19 @@ class AuthRepository(private val userDao: UserDao) {
     }
 
     /**
+     * "Esqueci minha senha" 100% local: como o app não tem servidor de e-mail,
+     * quem informa um e-mail cadastrado já define a nova senha direto.
+     * Devolve null se deu certo, ou a mensagem de erro.
+     */
+    suspend fun resetPassword(email: String, newPassword: String): String? {
+        val normalizedEmail = email.trim().lowercase()
+        if (!userDao.exists(normalizedEmail)) return "Não encontramos uma conta com esse e-mail."
+        val hashed = PasswordHasher.hash(newPassword)
+        val changed = userDao.updatePassword(normalizedEmail, hashed.hash, hashed.salt)
+        return if (changed > 0) null else "Não foi possível alterar a senha."
+    }
+
+    /**
      * Busca um usuário só pelo email, sem senha — usada para RESTAURAR
      * uma sessão salva (SessionManager) quando o app abre de novo,
      * sem precisar pedir login/senha outra vez.
