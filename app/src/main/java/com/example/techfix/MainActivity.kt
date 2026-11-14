@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -70,10 +72,14 @@ import com.example.techfix.ui.onboarding.professional.ProWorkDetailsScreen
 import com.example.techfix.ui.about.AboutScreen
 import com.example.techfix.ui.profile.EditProfileScreen
 import com.example.techfix.ui.profile.ProfileScreen
+import com.example.techfix.ui.orders.OrderDetail
+import com.example.techfix.ui.orders.OrderDetailScreen
 import com.example.techfix.ui.orders.OrderStatus
 import com.example.techfix.ui.orders.OrdersScreen
 import com.example.techfix.ui.orders.ServiceOrder
 import com.example.techfix.ui.pro.ProDashboardScreen
+import com.example.techfix.ui.pro.ProRequestDetailScreen
+import com.example.techfix.ui.request.RequestServiceScreen
 import com.example.techfix.ui.theme.TechFixTheme
 import com.example.produtos.ui.explore.ProdutoScreen
 
@@ -115,6 +121,11 @@ private object Routes {
 
     const val HOME = "home"
     const val PRO_HOME = "pro_home" // início do PROFISSIONAL
+
+    // Telas de pedido (os {…} são preenchidos na hora de navegar)
+    const val REQUEST_SERVICE = "request_service/{proId}"
+    const val ORDER_DETAIL = "order_detail/{orderId}"
+    const val PRO_REQUEST = "pro_request/{orderId}"
 
     // Barra inferior da Home (nova adição)
     const val EXPLORE = "explore"
@@ -245,6 +256,18 @@ private fun nextStatus(status: String): String? = when (status) {
     else -> null
 }
 
+private fun ServiceOrderEntity.toDetail(personName: String) = OrderDetail(
+    id = id.toString(),
+    deviceName = deviceName,
+    service = serviceDescription,
+    problem = problemText,
+    personName = personName,
+    status = runCatching { OrderStatus.valueOf(status) }.getOrDefault(OrderStatus.PENDING),
+    schedule = scheduledLabel,
+    location = locationLabel,
+    priceCents = priceCents
+)
+
 private fun ServiceOrder.toHistoryItem(): ServiceHistoryItem {
     val (historyStatus, progress) = when (status) {
         OrderStatus.COMPLETED -> ServiceStatus.CONCLUIDO to 100
@@ -252,6 +275,7 @@ private fun ServiceOrder.toHistoryItem(): ServiceHistoryItem {
         OrderStatus.IN_PROGRESS -> ServiceStatus.EM_ANDAMENTO to 50
         OrderStatus.APPROVED -> ServiceStatus.EM_ANDAMENTO to 25
         OrderStatus.PENDING -> ServiceStatus.EM_ANDAMENTO to 10
+        OrderStatus.CANCELED -> ServiceStatus.CONCLUIDO to 0
     }
     val completed = status == OrderStatus.COMPLETED
     return ServiceHistoryItem(
@@ -618,6 +642,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             HomeScreen(
                 userFirstName = firstName,
                 professionals = professionals.map { it.toUi() },
+                onProfessionalClick = { id -> navController.navigate("request_service/$id") },
                 onAboutClick = { navController.navigate(Routes.ABOUT) },
                 onNavItemSelected = { item ->
                     when (item) {
@@ -674,6 +699,102 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
+        // ---------------- Pedidos: solicitar, detalhe do cliente, detalhe do profissional ----------------
+        composable(
+            Routes.REQUEST_SERVICE,
+            arguments = listOf(navArgument("proId") { type = NavType.StringType })
+        ) { entry ->
+            val proId = entry.arguments?.getString("proId").orEmpty()
+            val pros by remember { database.professionalDao().observeAll() }
+                .collectAsState(initial = emptyList())
+            // "0" (botão do Perfil) = sem profissional escolhido → pega um disponível.
+            val target = pros.firstOrNull { it.id == proId }
+                ?: pros.firstOrNull { it.available }
+                ?: pros.firstOrNull()
+
+            RequestServiceScreen(
+                professionalName = target?.name ?: "Profissional TechFix",
+                professionalSpecialty = target?.specialty.orEmpty(),
+                onBack = { navController.popBackStack() },
+                onSubmit = { form ->
+                    coroutineScope.launch {
+                        database.serviceOrderDao().insert(
+                            ServiceOrderEntity(
+                                clientEmail = loggedInEmail,
+                                professionalEmail = target?.email,
+                                professionalName = target?.name ?: "Profissional TechFix",
+                                deviceName = form.device,
+                                serviceDescription = form.serviceName,
+                                status = "PENDING",
+                                priceCents = form.servicePriceCents,
+                                createdAt = System.currentTimeMillis(),
+                                problemText = form.problem,
+                                scheduledLabel = form.scheduleLabel,
+                                locationLabel = form.locationLabel
+                            )
+                        )
+                    }
+                },
+                onViewOrders = {
+                    navController.navigate(Routes.ORDERS) {
+                        popUpTo(Routes.REQUEST_SERVICE) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onGoHome = { navController.popBackStack(homeRoute(), false) }
+            )
+        }
+
+        composable(
+            Routes.ORDER_DETAIL,
+            arguments = listOf(navArgument("orderId") { type = NavType.LongType })
+        ) { entry ->
+            val orderId = entry.arguments?.getLong("orderId") ?: 0L
+            val received by remember(orderId) {
+                database.serviceOrderDao().observeReceivedById(orderId)
+            }.collectAsState(initial = null)
+
+            OrderDetailScreen(
+                detail = received?.let { it.order.toDetail(it.order.professionalName) },
+                onBack = { navController.popBackStack() },
+                onCancelOrder = {
+                    coroutineScope.launch {
+                        database.serviceOrderDao().updateStatus(orderId, "CANCELED")
+                    }
+                }
+            )
+        }
+
+        composable(
+            Routes.PRO_REQUEST,
+            arguments = listOf(navArgument("orderId") { type = NavType.LongType })
+        ) { entry ->
+            val orderId = entry.arguments?.getLong("orderId") ?: 0L
+            val received by remember(orderId) {
+                database.serviceOrderDao().observeReceivedById(orderId)
+            }.collectAsState(initial = null)
+
+            ProRequestDetailScreen(
+                detail = received?.let { it.order.toDetail(it.clientName) },
+                onBack = { navController.popBackStack() },
+                onAdvance = {
+                    val order = received?.order
+                    val next = order?.let { nextStatus(it.status) }
+                    if (order != null && next != null) {
+                        coroutineScope.launch {
+                            database.serviceOrderDao().updateStatus(order.id, next)
+                        }
+                    }
+                },
+                onRefuse = {
+                    coroutineScope.launch {
+                        database.serviceOrderDao().updateStatus(orderId, "CANCELED")
+                    }
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(Routes.ABOUT) {
             AboutScreen(onBack = { navController.popBackStack() })
         }
@@ -704,8 +825,9 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 orders = if (isProfessional) receivedOrders.map { it.toProUi() }
                 else clientOrders.map { it.toUi() },
                 onOrderClick = { orderId ->
-                    // Futuramente:
-                    // navController.navigate("order_detail/$orderId")
+                    navController.navigate(
+                        if (isProfessional) "pro_request/$orderId" else "order_detail/$orderId"
+                    )
                 },
                 onNavItemSelected = { item ->
                     when (item) {
@@ -771,11 +893,13 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             ProfileScreen(
                 profile = userProfile.copy(
                     completedServices = uiOrders.count { it.status == OrderStatus.COMPLETED },
-                    serviceHistory = uiOrders.map { it.toHistoryItem() }
+                    serviceHistory = uiOrders
+                        .filter { it.status != OrderStatus.CANCELED }
+                        .map { it.toHistoryItem() }
                 ),
                 onMenuClick = { showMenuDialog = true },
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
-                onRequestServiceClick = { /* TODO: navegar para solicitação de serviço */ },
+                onRequestServiceClick = { navController.navigate("request_service/0") },
                 onSeeAllHistoryClick = { /* TODO: navegar para histórico completo */ }
             )
         }
