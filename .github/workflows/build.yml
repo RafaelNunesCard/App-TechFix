@@ -6,6 +6,15 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Permite que o workflow publique a Release (arquivos no repositório)
+permissions:
+  contents: write
+
+# Se duas compilações começarem juntas, a mais nova espera a anterior terminar
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,9 +40,26 @@ jobs:
       - name: Compilar o APK de teste
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Guardar o APK para baixar
+      - name: Guardar o APK para baixar (aba Actions)
         uses: actions/upload-artifact@v4
         with:
           name: techfix-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      # A partir daqui: só roda em push na main e no botão "Run workflow",
+      # nunca em pull request.
+      - name: Publicar na Release "ultima-versao"
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk techfix.apk
+          SHORT_SHA="${GITHUB_SHA::7}"
+          DATA="$(TZ=America/Sao_Paulo date '+%d/%m/%Y às %H:%M')"
+          # apaga a release antiga (e a tag) para recriar apontando para o commit novo
+          gh release delete ultima-versao --cleanup-tag --yes || true
+          gh release create ultima-versao techfix.apk \
+            --title "TechFix - última versão" \
+            --target "$GITHUB_SHA" \
+            --notes "APK de teste gerado automaticamente em $DATA (commit $SHORT_SHA). Para instalar, desinstale antes a versão anterior do app."
