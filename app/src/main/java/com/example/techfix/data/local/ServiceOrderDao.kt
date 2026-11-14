@@ -37,6 +37,13 @@ interface ServiceOrderDao {
     )
     fun observeReceivedByProfessional(email: String): Flow<List<ReceivedOrder>>
 
+    /** Um pedido só (com o nome do cliente) — usado nas telas de detalhe. */
+    @Query(
+        "SELECT o.*, u.fullName AS clientName FROM service_orders o " +
+            "INNER JOIN users u ON u.email = o.clientEmail WHERE o.id = :id LIMIT 1"
+    )
+    fun observeReceivedById(id: Long): Flow<ReceivedOrder?>
+
     @Query("UPDATE service_orders SET status = :status WHERE id = :id")
     suspend fun updateStatus(id: Long, status: String)
 
