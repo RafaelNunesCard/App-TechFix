@@ -18,5 +18,11 @@ data class ServiceOrderEntity(
     val serviceDescription: String,
     val status: String,
     val priceCents: Int?,
-    val createdAt: Long
+    val createdAt: Long,
+    /** O que o cliente escreveu descrevendo o problema. */
+    val problemText: String = "",
+    /** Ex: "Hoje, 16:00". */
+    val scheduledLabel: String = "",
+    /** Ex: "Na casa do cliente - Rua das Flores, 120". */
+    val locationLabel: String = ""
 )
