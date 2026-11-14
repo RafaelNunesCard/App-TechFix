@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.techfix.ui.theme.TechFixAccentBrush
 import com.example.techfix.ui.theme.TechFixAccentSolid
 import com.example.techfix.ui.theme.TechFixBackground
 import com.example.techfix.ui.theme.TechFixBorder
@@ -78,7 +79,8 @@ fun formatCents(cents: Int?): String =
 fun OrderDetailScreen(
     detail: OrderDetail?,
     onBack: () -> Unit,
-    onCancelOrder: () -> Unit
+    onCancelOrder: () -> Unit,
+    onOpenChat: () -> Unit
 ) {
     var confirmCancel by remember { mutableStateOf(false) }
 
@@ -154,6 +156,18 @@ fun OrderDetailScreen(
                 }
 
                 PaymentCard(detail.priceCents)
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(TechFixAccentBrush)
+                        .clickable(onClick = onOpenChat),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Falar com o profissional", color = TechFixTextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
 
                 val canCancel = detail.status == OrderStatus.PENDING || detail.status == OrderStatus.APPROVED
                 if (canCancel) {
@@ -245,6 +259,115 @@ private fun TimelineCard(status: OrderStatus) {
                         )
                     }
                 }
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(
+                        title,
+                        color = if (done || current) TechFixTextPrimary else TechFixTextTertiary,
+                        fontSize = 14.sp,
+                        fontWeight = if (current) FontWeight.Bold else FontWeight.Medium
+                    )
+                    if (current) {
+                        Text(
+                            if (status == OrderStatus.WAITING_PARTS && index == 2) "Aguardando peças" else "Próxima etapa",
+                            color = TechFixTextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            }
+            if (index < steps.lastIndex) {
+                Box(
+                    modifier = Modifier
+                        .padding(start = 11.dp)
+                        .width(2.dp)
+                        .height(18.dp)
+                        .background(if (done) TechFixGreen else TechFixChipBackground)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun PaymentCard(priceCents: Int?) {
+    DetailCard {
+        SectionTitle("Pagamento")
+        Spacer(Modifier.height(10.dp))
+        if (priceCents == null) {
+            Text("Valor a combinar com o profissional.", color = TechFixTextSecondary, fontSize = 13.sp)
+        } else {
+            InfoRow("Serviço", formatCents(priceCents))
+            InfoRow("Taxa TechFix", formatCents(TECHFIX_FEE_CENTS))
+            Spacer(Modifier.height(6.dp))
+            Row {
+                Text("Total", color = TechFixTextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text(
+                    formatCents(priceCents + TECHFIX_FEE_CENTS),
+                    color = TechFixTextPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Text("Pagamento após a conclusão do serviço.", color = TechFixTextTertiary, fontSize = 11.sp)
+    }
+}
+
+@Composable
+internal fun DetailHeader(title: String, onBack: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(TechFixSurface)
+                .clickable(onClick = onBack),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Voltar",
+                tint = TechFixTextPrimary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Text(title, color = TechFixTextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+internal fun DetailCard(content: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = TechFixSurface,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, TechFixBorder)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) { content() }
+    }
+}
+
+@Composable
+internal fun SectionTitle(text: String) {
+    Text(text, color = TechFixTextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+}
+
+@Composable
+internal fun InfoRow(label: String, value: String) {
+    Column(modifier = Modifier.padding(vertical = 5.dp)) {
+        Text(label, color = TechFixTextTertiary, fontSize = 11.sp)
+        Text(value, color = TechFixTextPrimary, fontSize = 14.sp)
+    }
+}
+               }
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
