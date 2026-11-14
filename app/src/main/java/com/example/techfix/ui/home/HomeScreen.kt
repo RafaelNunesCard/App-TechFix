@@ -65,14 +65,6 @@ private val homeCategories = listOf(
     HomeCategory("painting", "Painting", Icons.Outlined.FormatPaint)
 )
 
-// NOTE: mock data — swap for a real repository/API call when the backend is ready.
-private val mockProfessionals = listOf(
-    Professional("1", "Carlos Mendes", "Eletricista", 4.9, 128, 1.2, true),
-    Professional("2", "Ana Ferreira", "Encanadora", 4.8, 94, 2.4, true),
-    Professional("3", "Roberto Lima", "Técnico em TI", 4.7, 210, 0.8, false),
-    Professional("4", "Juliana Costa", "Pintora", 4.9, 76, 3.1, true)
-)
-
 // =========================================================================================
 // HOME SCREEN
 // =========================================================================================
@@ -80,6 +72,7 @@ private val mockProfessionals = listOf(
 @Composable
 fun HomeScreen(
     userFirstName: String,
+    professionals: List<Professional> = emptyList(),
     onSearchClick: () -> Unit = {},
     onCategoryClick: (String) -> Unit = {},
     onProfessionalClick: (String) -> Unit = {},
@@ -126,7 +119,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                items(mockProfessionals) { professional ->
+                items(professionals) { professional ->
                     ProfessionalCard(
                         professional = professional,
                         onClick = { onProfessionalClick(professional.id) }
@@ -444,6 +437,12 @@ private fun NavItem(
 @Composable
 private fun HomeScreenPreview() {
     MaterialTheme {
-        HomeScreen(userFirstName = "Rafael")
+        HomeScreen(
+            userFirstName = "Rafael",
+            professionals = listOf(
+                Professional("1", "Carlos Mendes", "Eletricista", 4.9, 128, 1.2, true),
+                Professional("2", "Ana Ferreira", "Técnica em Celulares", 4.8, 94, 2.4, false)
+            )
+        )
     }
 }
