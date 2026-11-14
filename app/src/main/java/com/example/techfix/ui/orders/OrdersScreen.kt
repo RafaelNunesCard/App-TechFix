@@ -75,45 +75,9 @@ enum class OrderStatus(
 }
 
 
-/*
- * Dados temporários para visualização.
- *
- * Depois podemos trocar isso pelo banco/API.
- */
-private val mockOrders = listOf(
-    ServiceOrder(
-        id = "001",
-        deviceName = "Notebook Dell Inspiron",
-        serviceDescription = "Limpeza interna e troca de pasta térmica",
-        professionalName = "Carlos Mendes",
-        status = OrderStatus.IN_PROGRESS,
-        date = "Hoje",
-        price = "R$ 180,00"
-    ),
-    ServiceOrder(
-        id = "002",
-        deviceName = "iPhone 14 Pro",
-        serviceDescription = "Substituição da tela OLED frontal",
-        professionalName = "Ana Ferreira",
-        status = OrderStatus.WAITING_PARTS,
-        date = "12/09/2026",
-        price = "R$ 890,00"
-    ),
-    ServiceOrder(
-        id = "003",
-        deviceName = "MacBook Pro 16",
-        serviceDescription = "Troca de bateria e limpeza técnica",
-        professionalName = "Roberto Lima",
-        status = OrderStatus.COMPLETED,
-        date = "28/08/2026",
-        price = "R$ 420,00"
-    )
-)
-
-
 @Composable
 fun OrdersScreen(
-    orders: List<ServiceOrder> = mockOrders,
+    orders: List<ServiceOrder> = emptyList(),
     onOrderClick: (String) -> Unit = {},
     onNavItemSelected: (HomeNavItem) -> Unit = {}
 ) {
