@@ -16,4 +16,8 @@ interface UserDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM users WHERE email = :email)")
     suspend fun exists(email: String): Boolean
+
+    /** Troca a senha (hash + salt) de uma conta. Devolve quantas linhas mudaram (0 = e-mail não existe). */
+    @Query("UPDATE users SET passwordHash = :hash, passwordSalt = :salt WHERE email = :email")
+    suspend fun updatePassword(email: String, hash: String, salt: String): Int
 }
