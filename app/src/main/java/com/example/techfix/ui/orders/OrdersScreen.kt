@@ -71,6 +71,10 @@ enum class OrderStatus(
     COMPLETED(
         "Concluído",
         Icons.Outlined.TaskAlt
+    ),
+    CANCELED(
+        "Cancelado",
+        Icons.Outlined.Cancel
     )
 }
 
@@ -203,7 +207,7 @@ private fun OrdersSummary(
     orders: List<ServiceOrder>
 ) {
     val activeOrders = orders.count {
-        it.status != OrderStatus.COMPLETED
+        it.status != OrderStatus.COMPLETED && it.status != OrderStatus.CANCELED
     }
 
     Surface(
@@ -446,7 +450,8 @@ private fun StatusBadge(
         OrderStatus.WAITING_PARTS ->
             Color(0xFF3A3425)
 
-        OrderStatus.PENDING ->
+        OrderStatus.PENDING,
+        OrderStatus.CANCELED ->
             Color(0xFF2A2A2C)
     }
 
@@ -461,7 +466,8 @@ private fun StatusBadge(
         OrderStatus.WAITING_PARTS ->
             Color(0xFFE0C441)
 
-        OrderStatus.PENDING ->
+        OrderStatus.PENDING,
+        OrderStatus.CANCELED ->
             TextSecondary
     }
 
