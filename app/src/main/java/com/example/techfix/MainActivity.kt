@@ -7,7 +7,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +31,9 @@ import com.example.produtos.ui.explore.ProdutoNavItem
 import androidx.core.view.WindowCompat
 import kotlinx.coroutines.launch
 
+import com.example.techfix.data.AuthRepository
 import com.example.techfix.data.OnboardingRepository
+import com.example.techfix.data.SessionManager
 import com.example.techfix.data.UserSession
 import com.example.techfix.data.local.TechFixDatabase
 import com.example.techfix.model.UserProfile
@@ -37,6 +42,7 @@ import java.util.Date
 import java.util.Locale
 import com.example.techfix.ui.auth.AuthUiState
 import com.example.techfix.ui.auth.AuthViewModel
+import com.example.techfix.ui.auth.ForgotPasswordScreen
 import com.example.techfix.ui.auth.LoginScreen
 import com.example.techfix.ui.auth.SignUpBasicInfoScreen
 import com.example.techfix.ui.home.HomeNavItem
@@ -80,6 +86,7 @@ private object Routes {
     const val SPLASH = "splash"
     const val LOGIN = "login"
     const val SIGN_UP = "sign_up"
+    const val FORGOT_PASSWORD = "forgot_password"
     const val PATHWAY = "pathway"
     const val ABOUT = "about"
 
@@ -182,6 +189,19 @@ private fun buildUserProfile(
     )
 }
 
+/**
+ * Navegação da barra inferior (Início / Explorar / Pedidos / Perfil) igual para
+ * TODAS as telas: não empilha a mesma tela várias vezes e o botão "voltar"
+ * sempre leva para o Início (e do Início, sai do app).
+ */
+private fun NavHostController.navigateToTab(route: String) {
+    navigate(route) {
+        popUpTo(Routes.HOME) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
 @Composable
 fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     val context = LocalContext.current
@@ -219,7 +239,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         mutableStateOf(buildUserProfile(fullName = "", createdAtMillis = System.currentTimeMillis(), interestCategories = emptyList()))
     }
 
-       NavHost(
+    NavHost(
         navController = navController,
         startDestination = Routes.SPLASH
     ) {
@@ -281,10 +301,24 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             }
 
             LoginScreen(
-                onForgotPassword = { /* TODO */ },
+                onForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
                 onLogin = { email, password -> authViewModel.login(email, password) },
                 onSocialLogin = { /* TODO */ },
                 onNavigateToSignUp = { navController.navigate(Routes.SIGN_UP) }
+            )
+        }
+
+        composable(Routes.FORGOT_PASSWORD) {
+            val authRepository = remember { AuthRepository(TechFixDatabase.getInstance(context).userDao()) }
+            ForgotPasswordScreen(
+                onBack = { navController.popBackStack() },
+                onResetPassword = { email, newPassword ->
+                    authRepository.resetPassword(email, newPassword)
+                },
+                onDone = {
+                    Toast.makeText(context, "Senha alterada! Entre com a nova senha.", Toast.LENGTH_LONG).show()
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -472,9 +506,9 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 onNavItemSelected = { item ->
                     when (item) {
                         HomeNavItem.HOME -> Unit
-                        HomeNavItem.EXPLORE -> navController.navigate(Routes.EXPLORE)
-                        HomeNavItem.ORDERS -> navController.navigate(Routes.ORDERS)
-                        HomeNavItem.PROFILE -> navController.navigate(Routes.PROFILE)
+                        HomeNavItem.EXPLORE -> navController.navigateToTab(Routes.EXPLORE)
+                        HomeNavItem.ORDERS -> navController.navigateToTab(Routes.ORDERS)
+                        HomeNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE)
                     }
                 }
             )
@@ -485,32 +519,18 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         // ---------------- Barra inferior da Home ----------------
-           composable(Routes.EXPLORE) {
-               ProdutoScreen(
-                   onNavItemSelected = { item ->
-                       when (item) {
-                           ProdutoNavItem.HOME -> {
-                               navController.navigate(Routes.HOME) {
-                                   launchSingleTop = true
-                               }
-                           }
-                           ProdutoNavItem.EXPLORE -> {
-                               // Já está na tela de explorar/serviços, não precisa navegar
-                           }
-                           ProdutoNavItem.ORDERS -> {
-                               navController.navigate(Routes.ORDERS) { // Ajuste para a rota de pedidos do seu app
-                                   launchSingleTop = true
-                               }
-                           }
-                           ProdutoNavItem.PROFILE -> {
-                               navController.navigate(Routes.PROFILE) { // Ajuste para a rota de perfil do seu app
-                                   launchSingleTop = true
-                               }
-                           }
-                       }
-                   }
-               )
-           }
+        composable(Routes.EXPLORE) {
+            ProdutoScreen(
+                onNavItemSelected = { item ->
+                    when (item) {
+                        ProdutoNavItem.HOME -> navController.navigateToTab(Routes.HOME)
+                        ProdutoNavItem.EXPLORE -> Unit
+                        ProdutoNavItem.ORDERS -> navController.navigateToTab(Routes.ORDERS)
+                        ProdutoNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE)
+                    }
+                }
+            )
+        }
 
         composable(Routes.ORDERS) {
             OrdersScreen(
@@ -520,23 +540,10 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 },
                 onNavItemSelected = { item ->
                     when (item) {
-                        HomeNavItem.HOME -> {
-                            navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.HOME)
-                            }
-                        }
-
-                        HomeNavItem.EXPLORE -> {
-                            navController.navigate(Routes.EXPLORE)
-                        }
-
-                        HomeNavItem.ORDERS -> {
-                            // Já estamos em Pedidos
-                        }
-
-                        HomeNavItem.PROFILE -> {
-                            navController.navigate(Routes.PROFILE)
-                        }
+                        HomeNavItem.HOME -> navController.navigateToTab(Routes.HOME)
+                        HomeNavItem.EXPLORE -> navController.navigateToTab(Routes.EXPLORE)
+                        HomeNavItem.ORDERS -> Unit
+                        HomeNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE)
                     }
                 }
             )
@@ -544,9 +551,46 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
 
         // ---------------- Perfil ----------------
         composable(Routes.PROFILE) {
+            var showMenuDialog by remember { mutableStateOf(false) }
+
+            if (showMenuDialog) {
+                AlertDialog(
+                    onDismissRequest = { showMenuDialog = false },
+                    title = { Text("Menu") },
+                    text = { Text("Deseja sair da sua conta?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showMenuDialog = false
+                            // Esquece a sessão salva e limpa tudo que era da conta anterior.
+                            SessionManager.clear(context)
+                            UserSession.currentUser = null
+                            loggedInFullName = ""
+                            loggedInEmail = ""
+                            selectedCategoryIds = emptySet()
+                            selectedPriorityId = ""
+                            proSelectedSpecialties = emptySet()
+                            proWorkDetails = null
+                            proProfileInfo = null
+                            userProfile = buildUserProfile(
+                                fullName = "",
+                                createdAtMillis = System.currentTimeMillis(),
+                                interestCategories = emptyList()
+                            )
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }) { Text("Sair da conta") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showMenuDialog = false }) { Text("Cancelar") }
+                    }
+                )
+            }
+
             ProfileScreen(
                 profile = userProfile,
-                onMenuClick = { /* TODO: abrir drawer/menu, se existir */ },
+                onMenuClick = { showMenuDialog = true },
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
                 onRequestServiceClick = { /* TODO: navegar para solicitação de serviço */ },
                 onSeeAllHistoryClick = { /* TODO: navegar para histórico completo */ }
