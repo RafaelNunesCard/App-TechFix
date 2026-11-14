@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -58,6 +57,7 @@ import com.example.techfix.ui.about.AboutScreen
 import com.example.techfix.ui.profile.EditProfileScreen
 import com.example.techfix.ui.profile.ProfileScreen
 import com.example.techfix.ui.orders.OrdersScreen
+import com.example.techfix.ui.theme.TechFixTheme
 import com.example.produtos.ui.explore.ProdutoScreen
 
 
@@ -68,23 +68,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TechFixTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF121212)) {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     TechFixNavHost()
                 }
             }
         }
     }
-}
-
-@Composable
-fun TechFixTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = MaterialTheme.colorScheme.copy(
-            background = Color(0xFF121212),
-            surface = Color(0xFF121212)
-        ),
-        content = content
-    )
 }
 
 private object Routes {
@@ -495,7 +484,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             AboutScreen(onBack = { navController.popBackStack() })
         }
 
-        // ---------------- Barra inferior da Home (nova adição) ----------------
+        // ---------------- Barra inferior da Home ----------------
            composable(Routes.EXPLORE) {
                ProdutoScreen(
                    onNavItemSelected = { item ->
@@ -553,7 +542,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // ---------------- Perfil (nova adição) ----------------
+        // ---------------- Perfil ----------------
         composable(Routes.PROFILE) {
             ProfileScreen(
                 profile = userProfile,
