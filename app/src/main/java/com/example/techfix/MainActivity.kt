@@ -32,11 +32,17 @@ import androidx.core.view.WindowCompat
 import kotlinx.coroutines.launch
 
 import com.example.techfix.data.AuthRepository
+import com.example.techfix.data.DemoData
 import com.example.techfix.data.OnboardingRepository
 import com.example.techfix.data.SessionManager
 import com.example.techfix.data.UserSession
+import com.example.techfix.data.local.ProfessionalEntity
+import com.example.techfix.data.local.ServiceOrderEntity
 import com.example.techfix.data.local.TechFixDatabase
+import com.example.techfix.model.ServiceHistoryItem
+import com.example.techfix.model.ServiceStatus
 import com.example.techfix.model.UserProfile
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -47,6 +53,7 @@ import com.example.techfix.ui.auth.LoginScreen
 import com.example.techfix.ui.auth.SignUpBasicInfoScreen
 import com.example.techfix.ui.home.HomeNavItem
 import com.example.techfix.ui.home.HomeScreen
+import com.example.techfix.ui.home.Professional
 import com.example.techfix.ui.onboarding.CategorySelectionScreen
 import com.example.techfix.ui.onboarding.MatchPriorityScreen
 import com.example.techfix.ui.onboarding.OnboardingSummaryScreen
@@ -62,7 +69,9 @@ import com.example.techfix.ui.onboarding.professional.ProWorkDetailsScreen
 import com.example.techfix.ui.about.AboutScreen
 import com.example.techfix.ui.profile.EditProfileScreen
 import com.example.techfix.ui.profile.ProfileScreen
+import com.example.techfix.ui.orders.OrderStatus
 import com.example.techfix.ui.orders.OrdersScreen
+import com.example.techfix.ui.orders.ServiceOrder
 import com.example.techfix.ui.theme.TechFixTheme
 import com.example.produtos.ui.explore.ProdutoScreen
 
@@ -189,6 +198,58 @@ private fun buildUserProfile(
     )
 }
 
+// ---------- Converte o que vem do Room no que as telas esperam ----------
+
+private fun formatOrderDate(millis: Long): String {
+    val format = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    val day = format.format(Date(millis))
+    return if (day == format.format(Date())) "Hoje" else day
+}
+
+private fun formatPrice(cents: Int?): String =
+    if (cents == null) "A combinar"
+    else NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(cents / 100.0)
+
+private fun ServiceOrderEntity.toUi() = ServiceOrder(
+    id = id.toString(),
+    deviceName = deviceName,
+    serviceDescription = serviceDescription,
+    professionalName = professionalName,
+    status = runCatching { OrderStatus.valueOf(status) }.getOrDefault(OrderStatus.PENDING),
+    date = formatOrderDate(createdAt),
+    price = formatPrice(priceCents)
+)
+
+private fun ProfessionalEntity.toUi() = Professional(
+    id = id,
+    name = name,
+    specialty = specialty,
+    rating = rating,
+    reviewCount = reviewCount,
+    distanceKm = distanceKm,
+    available = available
+)
+
+private fun ServiceOrder.toHistoryItem(): ServiceHistoryItem {
+    val (historyStatus, progress) = when (status) {
+        OrderStatus.COMPLETED -> ServiceStatus.CONCLUIDO to 100
+        OrderStatus.WAITING_PARTS -> ServiceStatus.AGUARDANDO_PECAS to 60
+        OrderStatus.IN_PROGRESS -> ServiceStatus.EM_ANDAMENTO to 50
+        OrderStatus.APPROVED -> ServiceStatus.EM_ANDAMENTO to 25
+        OrderStatus.PENDING -> ServiceStatus.EM_ANDAMENTO to 10
+    }
+    val completed = status == OrderStatus.COMPLETED
+    return ServiceHistoryItem(
+        deviceName = deviceName,
+        description = serviceDescription,
+        status = historyStatus,
+        progress = progress,
+        dateLabel = if (completed) "FINALIZADO EM" else "ABERTO EM",
+        date = date,
+        warranty = if (completed) "Válida por 90 dias" else null
+    )
+}
+
 /**
  * Navegação da barra inferior (Início / Explorar / Pedidos / Perfil) igual para
  * TODAS as telas: não empilha a mesma tela várias vezes e o botão "voltar"
@@ -215,7 +276,12 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
 
     // NOVO: ponte entre as telas e as tabelas novas do Room
     // (client_onboarding / professional_profile).
-    val onboardingRepository = remember { OnboardingRepository(TechFixDatabase.getInstance(context)) }
+    val database = remember { TechFixDatabase.getInstance(context) }
+    val onboardingRepository = remember { OnboardingRepository(database) }
+
+    // Cria as contas e os dados de demonstração se ainda não existirem
+    // (ver DemoData.kt). Roda em segundo plano enquanto a Splash aparece.
+    LaunchedEffect(Unit) { DemoData.seedIfNeeded(database) }
     // NOVO: "saveClientOnboarding"/"saveProfessionalProfile" são funções
     // "suspend" — só podem ser chamadas de dentro de uma corrotina, e é
     // esse escopo que nos deixa abrir uma a partir de um clique.
@@ -500,8 +566,12 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 .firstOrNull()
                 .takeUnless { it.isNullOrBlank() } ?: "Bem-vindo(a)"
 
+            val professionals by remember { database.professionalDao().observeAll() }
+                .collectAsState(initial = emptyList())
+
             HomeScreen(
                 userFirstName = firstName,
+                professionals = professionals.map { it.toUi() },
                 onAboutClick = { navController.navigate(Routes.ABOUT) },
                 onNavItemSelected = { item ->
                     when (item) {
@@ -533,7 +603,12 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         composable(Routes.ORDERS) {
+            val orders by remember(loggedInEmail) {
+                database.serviceOrderDao().observeByClient(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+
             OrdersScreen(
+                orders = orders.map { it.toUi() },
                 onOrderClick = { orderId ->
                     // Futuramente:
                     // navController.navigate("order_detail/$orderId")
@@ -552,6 +627,12 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         // ---------------- Perfil ----------------
         composable(Routes.PROFILE) {
             var showMenuDialog by remember { mutableStateOf(false) }
+
+            // O histórico e o contador de serviços vêm dos pedidos reais do Room.
+            val profileOrders by remember(loggedInEmail) {
+                database.serviceOrderDao().observeByClient(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+            val uiOrders = profileOrders.map { it.toUi() }
 
             if (showMenuDialog) {
                 AlertDialog(
@@ -589,7 +670,10 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             }
 
             ProfileScreen(
-                profile = userProfile,
+                profile = userProfile.copy(
+                    completedServices = uiOrders.count { it.status == OrderStatus.COMPLETED },
+                    serviceHistory = uiOrders.map { it.toHistoryItem() }
+                ),
                 onMenuClick = { showMenuDialog = true },
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
                 onRequestServiceClick = { /* TODO: navegar para solicitação de serviço */ },
