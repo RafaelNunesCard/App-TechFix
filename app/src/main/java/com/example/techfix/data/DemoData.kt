@@ -108,28 +108,36 @@ object DemoData {
                         professionalName = "Carlos Mendes",
                         deviceName = "Notebook Dell Inspiron",
                         serviceDescription = "Limpeza interna e troca de pasta térmica",
-                        status = "IN_PROGRESS", priceCents = 18000, createdAt = now
+                        status = "IN_PROGRESS", priceCents = 18000, createdAt = now,
+                        problemText = "O notebook esquenta muito e desliga sozinho depois de uns 20 minutos.",
+                        scheduledLabel = "Hoje, 16:00", locationLabel = "Na casa do cliente - Rua das Flores, 120"
                     ),
                     ServiceOrderEntity(
                         clientEmail = CLIENT_EMAIL, professionalEmail = PRO_EMAIL,
                         professionalName = "Carlos Mendes",
                         deviceName = "Roteador Wi-Fi",
                         serviceDescription = "Instalação e configuração da rede da casa",
-                        status = "PENDING", priceCents = null, createdAt = now - 1 * DAY
+                        status = "PENDING", priceCents = null, createdAt = now - 1 * DAY,
+                        problemText = "Preciso instalar um roteador novo e configurar a rede para toda a casa.",
+                        scheduledLabel = "Amanhã, 09:00", locationLabel = "Na casa do cliente - Rua das Flores, 120"
                     ),
                     ServiceOrderEntity(
                         clientEmail = CLIENT_EMAIL, professionalEmail = null,
                         professionalName = "Ana Ferreira",
                         deviceName = "iPhone 14 Pro",
                         serviceDescription = "Substituição da tela OLED frontal",
-                        status = "WAITING_PARTS", priceCents = 89000, createdAt = now - 3 * DAY
+                        status = "WAITING_PARTS", priceCents = 89000, createdAt = now - 3 * DAY,
+                        problemText = "A tela trincou depois de uma queda e o toque parou de funcionar.",
+                        scheduledLabel = "Há 3 dias", locationLabel = "Levar ao técnico"
                     ),
                     ServiceOrderEntity(
                         clientEmail = CLIENT_EMAIL, professionalEmail = null,
                         professionalName = "Roberto Lima",
                         deviceName = "MacBook Pro 16",
                         serviceDescription = "Troca de bateria e limpeza técnica",
-                        status = "COMPLETED", priceCents = 42000, createdAt = now - 30 * DAY
+                        status = "COMPLETED", priceCents = 42000, createdAt = now - 30 * DAY,
+                        problemText = "A bateria não segura mais carga e o aparelho precisa de limpeza.",
+                        scheduledLabel = "Há 30 dias", locationLabel = "Levar ao técnico"
                     )
                 )
             )
