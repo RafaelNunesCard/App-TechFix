@@ -468,4 +468,615 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                             // Tem perfil profissional salvo? Então entra como profissional.
                             val proProfile = database.professionalProfileDao().getByEmail(state.email)
                             isProfessional = proProfile != null
-               
+                            if (proProfile != null) {
+                                userProfile = userProfile.copy(bio = proProfile.bio)
+                            }
+
+                            navController.navigate(if (proProfile != null) Routes.PRO_HOME else Routes.HOME) {
+                                popUpTo(Routes.LOGIN) { inclusive = true }
+                            }
+                        }
+                        authViewModel.resetState()
+                    }
+                    is AuthUiState.Error -> {
+                        Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                        authViewModel.resetState()
+                    }
+                    else -> Unit
+                }
+            }
+
+            LoginScreen(
+                onForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
+                onLogin = { email, password -> authViewModel.login(email, password) },
+                onSocialLogin = { /* TODO */ },
+                onNavigateToSignUp = { navController.navigate(Routes.SIGN_UP) }
+            )
+        }
+
+        composable(Routes.FORGOT_PASSWORD) {
+            val authRepository = remember { AuthRepository(TechFixDatabase.getInstance(context).userDao()) }
+            ForgotPasswordScreen(
+                onBack = { navController.popBackStack() },
+                onResetPassword = { email, newPassword ->
+                    authRepository.resetPassword(email, newPassword)
+                },
+                onDone = {
+                    Toast.makeText(context, "Senha alterada! Entre com a nova senha.", Toast.LENGTH_LONG).show()
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.SIGN_UP) {
+            val authViewModel: AuthViewModel = viewModel()
+            val uiState by authViewModel.uiState.collectAsState()
+
+            LaunchedEffect(uiState) {
+                when (val state = uiState) {
+                    is AuthUiState.LoggedIn -> {
+                        loggedInFullName = state.fullName
+                        loggedInEmail = state.email
+
+                        // Conta acabou de ser criada — ainda não existe
+                        // onboarding salvo, então o perfil nasce "zerado".
+                        isProfessional = false
+                        val user = UserSession.currentUser
+                        userProfile = buildUserProfile(
+                            fullName = state.fullName,
+                            createdAtMillis = user?.createdAt ?: System.currentTimeMillis(),
+                            interestCategories = emptyList()
+                        )
+
+                        navController.navigate(Routes.PATHWAY)
+                        authViewModel.resetState()
+                    }
+                    is AuthUiState.Error -> {
+                        Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                        authViewModel.resetState()
+                    }
+                    else -> Unit
+                }
+            }
+
+            SignUpBasicInfoScreen(
+                onContinue = { basicInfo ->
+                    authViewModel.signUp(basicInfo.fullName, basicInfo.email, basicInfo.password)
+                },
+                onNavigateToLogin = { navController.popBackStack() }
+            )
+        }
+
+        // ---------------- Pathway: branches into client vs. professional ----------------
+        composable(Routes.PATHWAY) {
+            PathwaySelectionScreen(
+                onContinue = { pathway ->
+                    when (pathway) {
+                        UserPathway.NEEDS_SERVICE -> navController.navigate(Routes.CATEGORIES)
+                        UserPathway.OFFERS_SERVICE -> navController.navigate(Routes.PRO_SERVICES)
+                    }
+                }
+            )
+        }
+
+        // ================= CLIENT ONBOARDING =================
+        composable(Routes.CATEGORIES) {
+            CategorySelectionScreen(
+                onBack = { navController.popBackStack() },
+                onContinue = { selectedIds ->
+                    selectedCategoryIds = selectedIds
+                    navController.navigate(Routes.PRIORITY)
+                }
+            )
+        }
+
+        composable(Routes.PRIORITY) {
+            MatchPriorityScreen(
+                onBack = { navController.popBackStack() },
+                onContinue = { priorityId ->
+                    selectedPriorityId = priorityId
+                    navController.navigate(Routes.SUMMARY)
+                }
+            )
+        }
+
+        composable(Routes.SUMMARY) {
+            OnboardingSummaryScreen(
+                selectedInterests = selectedCategoryIds.mapNotNull { categoryLabels[it] },
+                matchingPriorityLabel = priorityLabels[selectedPriorityId]
+                    ?: "Highest Rated Professionals first",
+                onStartExploring = {
+                    // NOVO: salva de verdade no Room antes de ir pra Home.
+                    coroutineScope.launch {
+                        onboardingRepository.saveClientOnboarding(
+                            userEmail = loggedInEmail,
+                            selectedCategoryIds = selectedCategoryIds,
+                            priorityId = selectedPriorityId
+                        )
+                    }
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    }
+                },
+                onBackToPreferences = { navController.popBackStack() }
+            )
+        }
+
+        // ================= PROFESSIONAL ONBOARDING =================
+        composable(Routes.PRO_SERVICES) {
+            ProServiceCategoriesScreen(
+                onBack = { navController.popBackStack() },
+                onContinue = { selectedIds ->
+                    proSelectedCategoryIds = selectedIds
+                    navController.navigate(Routes.PRO_SPECIALTIES)
+                }
+            )
+        }
+
+        composable(Routes.PRO_SPECIALTIES) {
+            ProSpecialtiesScreen(
+                selectedCategoryIds = proSelectedCategoryIds,
+                onBack = { navController.popBackStack() },
+                onContinue = { specialties ->
+                    proSelectedSpecialties = specialties
+                    navController.navigate(Routes.PRO_WORK_DETAILS)
+                }
+            )
+        }
+
+        composable(Routes.PRO_WORK_DETAILS) {
+            ProWorkDetailsScreen(
+                onBack = { navController.popBackStack() },
+                onContinue = { details ->
+                    proWorkDetails = details
+                    navController.navigate(Routes.PRO_PROFILE)
+                }
+            )
+        }
+
+        composable(Routes.PRO_PROFILE) {
+            ProCreateProfileScreen(
+                onBack = { navController.popBackStack() },
+                onContinue = { profileInfo ->
+                    proProfileInfo = profileInfo
+                    navController.navigate(Routes.PRO_PROFILE_READY)
+                },
+                onUploadPhoto = { /* TODO: launch Photo Picker */ },
+                onAddPortfolioItem = { /* TODO: launch Photo Picker for portfolio */ }
+            )
+        }
+
+        composable(Routes.PRO_PROFILE_READY) {
+            val profile = proProfileInfo
+            val details = proWorkDetails
+
+            ProProfileReadyScreen(
+                fullName = profile?.fullName ?: loggedInFullName,
+                bio = profile?.shortBio.orEmpty(),
+                specialties = proSelectedSpecialties.toList(),
+                serviceRadiusKm = details?.serviceRadiusKm ?: 15,
+                availabilityLabel = availabilityLabel(details?.availableDayIds ?: emptySet()),
+                onEditInfo = { navController.popBackStack() },
+                onPublish = {
+                    // NOVO: salva o perfil profissional completo no Room.
+                    coroutineScope.launch {
+                        onboardingRepository.saveProfessionalProfile(
+                            userEmail = loggedInEmail,
+                            serviceCategoryIds = proSelectedCategoryIds,
+                            specialtyIds = proSelectedSpecialties,
+                            experienceLevel = details?.experienceLevel.orEmpty(),
+                            serviceRadiusKm = details?.serviceRadiusKm ?: 15,
+                            availableDayIds = details?.availableDayIds ?: emptySet(),
+                            bio = profile?.shortBio.orEmpty(),
+                            // Ainda não existe upload de foto de verdade
+                            // (é só um TODO na tela) — por isso null aqui.
+                            photoUri = null
+                        )
+
+                        // Aparece em "Profissionais em destaque" na Home dos clientes.
+                        database.professionalDao().insertAll(
+                            listOf(
+                                ProfessionalEntity(
+                                    id = loggedInEmail,
+                                    email = loggedInEmail,
+                                    name = profile?.fullName?.ifBlank { null } ?: loggedInFullName,
+                                    specialty = proSelectedCategoryIds
+                                        .mapNotNull { categoryLabels[it] }
+                                        .firstOrNull() ?: "Profissional TechFix",
+                                    rating = 0.0,
+                                    reviewCount = 0,
+                                    distanceKm = 0.0,
+                                    available = true
+                                )
+                            )
+                        )
+                    }
+                    isProfessional = true
+                    navController.navigate(Routes.PRO_HOME) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // ---------------- App ----------------
+        composable(Routes.HOME) {
+            val firstName = loggedInFullName.trim()
+                .split(" ")
+                .firstOrNull()
+                .takeUnless { it.isNullOrBlank() } ?: "Bem-vindo(a)"
+
+            val professionals by remember { database.professionalDao().observeAll() }
+                .collectAsState(initial = emptyList())
+
+            HomeScreen(
+                userFirstName = firstName,
+                professionals = professionals.map { it.toUi() },
+                onProfessionalClick = { id -> navController.navigate("request_service/$id") },
+                onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) },
+                onAboutClick = { navController.navigate(Routes.ABOUT) },
+                onNavItemSelected = { item ->
+                    when (item) {
+                        HomeNavItem.HOME -> Unit
+                        HomeNavItem.EXPLORE -> navController.navigateToTab(Routes.EXPLORE, homeRoute())
+                        HomeNavItem.ORDERS -> navController.navigateToTab(Routes.ORDERS, homeRoute())
+                        HomeNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE, homeRoute())
+                    }
+                }
+            )
+        }
+
+        composable(Routes.PRO_HOME) {
+            val received by remember(loggedInEmail) {
+                database.serviceOrderDao().observeReceivedByProfessional(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+            val availability by remember(loggedInEmail) {
+                database.professionalDao().observeAvailability(loggedInEmail)
+            }.collectAsState(initial = true)
+
+            val earningsCents = received
+                .filter { it.order.status == "COMPLETED" }
+                .sumOf { it.order.priceCents ?: 0 }
+
+            ProDashboardScreen(
+                proName = loggedInFullName,
+                specialty = "Profissional TechFix",
+                available = availability ?: true,
+                onAvailabilityChange = { newValue ->
+                    coroutineScope.launch {
+                        database.professionalDao().setAvailability(loggedInEmail, newValue)
+                    }
+                },
+                earningsLabel = formatPrice(earningsCents),
+                orders = received.map { it.toProUi() },
+                onAdvanceOrder = { orderId ->
+                    val target = received.firstOrNull { it.order.id.toString() == orderId }?.order
+                    val next = target?.let { nextStatus(it.status) }
+                    if (target != null && next != null) {
+                        coroutineScope.launch {
+                            database.serviceOrderDao().updateStatus(target.id, next)
+                        }
+                    }
+                },
+                onViewRequests = { navController.navigateToTab(Routes.ORDERS, homeRoute()) },
+                onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) },
+                onNavItemSelected = { item ->
+                    when (item) {
+                        HomeNavItem.HOME -> Unit
+                        HomeNavItem.EXPLORE -> navController.navigateToTab(Routes.EXPLORE, homeRoute())
+                        HomeNavItem.ORDERS -> navController.navigateToTab(Routes.ORDERS, homeRoute())
+                        HomeNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE, homeRoute())
+                    }
+                }
+            )
+        }
+
+        // ---------------- Pedidos: solicitar, detalhe do cliente, detalhe do profissional ----------------
+        composable(
+            Routes.REQUEST_SERVICE,
+            arguments = listOf(navArgument("proId") { type = NavType.StringType })
+        ) { entry ->
+            val proId = entry.arguments?.getString("proId").orEmpty()
+            val pros by remember { database.professionalDao().observeAll() }
+                .collectAsState(initial = emptyList())
+            // "0" (botão do Perfil) = sem profissional escolhido → pega um disponível.
+            val target = pros.firstOrNull { it.id == proId }
+                ?: pros.firstOrNull { it.available }
+                ?: pros.firstOrNull()
+
+            RequestServiceScreen(
+                professionalName = target?.name ?: "Profissional TechFix",
+                professionalSpecialty = target?.specialty.orEmpty(),
+                onBack = { navController.popBackStack() },
+                onSubmit = { form ->
+                    coroutineScope.launch {
+                        database.serviceOrderDao().insert(
+                            ServiceOrderEntity(
+                                clientEmail = loggedInEmail,
+                                professionalEmail = target?.email,
+                                professionalName = target?.name ?: "Profissional TechFix",
+                                deviceName = form.device,
+                                serviceDescription = form.serviceName,
+                                status = "PENDING",
+                                priceCents = form.servicePriceCents,
+                                createdAt = System.currentTimeMillis(),
+                                problemText = form.problem,
+                                scheduledLabel = form.scheduleLabel,
+                                locationLabel = form.locationLabel
+                            )
+                        )
+                    }
+                },
+                onViewOrders = {
+                    navController.navigate(Routes.ORDERS) {
+                        popUpTo(Routes.REQUEST_SERVICE) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onGoHome = { navController.popBackStack(homeRoute(), false) }
+            )
+        }
+
+        composable(
+            Routes.ORDER_DETAIL,
+            arguments = listOf(navArgument("orderId") { type = NavType.LongType })
+        ) { entry ->
+            val orderId = entry.arguments?.getLong("orderId") ?: 0L
+            val received by remember(orderId) {
+                database.serviceOrderDao().observeReceivedById(orderId)
+            }.collectAsState(initial = null)
+
+            OrderDetailScreen(
+                detail = received?.let { it.order.toDetail(it.order.professionalName) },
+                onBack = { navController.popBackStack() },
+                onCancelOrder = {
+                    coroutineScope.launch {
+                        database.serviceOrderDao().updateStatus(orderId, "CANCELED")
+                    }
+                },
+                onOpenChat = { navController.navigate("chat/$orderId") }
+            )
+        }
+
+        composable(
+            Routes.PRO_REQUEST,
+            arguments = listOf(navArgument("orderId") { type = NavType.LongType })
+        ) { entry ->
+            val orderId = entry.arguments?.getLong("orderId") ?: 0L
+            val received by remember(orderId) {
+                database.serviceOrderDao().observeReceivedById(orderId)
+            }.collectAsState(initial = null)
+
+            ProRequestDetailScreen(
+                detail = received?.let { it.order.toDetail(it.clientName) },
+                onBack = { navController.popBackStack() },
+                onAdvance = {
+                    val order = received?.order
+                    val next = order?.let { nextStatus(it.status) }
+                    if (order != null && next != null) {
+                        coroutineScope.launch {
+                            database.serviceOrderDao().updateStatus(order.id, next)
+                        }
+                    }
+                },
+                onRefuse = {
+                    coroutineScope.launch {
+                        database.serviceOrderDao().updateStatus(orderId, "CANCELED")
+                    }
+                    navController.popBackStack()
+                },
+                onOpenChat = { navController.navigate("chat/$orderId") }
+            )
+        }
+
+        composable(Routes.CHAT, arguments = listOf(navArgument("orderId") { type = NavType.LongType })) { entry ->
+            val orderId = entry.arguments?.getLong("orderId") ?: 0L
+            val received by remember(orderId) {
+                database.serviceOrderDao().observeReceivedById(orderId)
+            }.collectAsState(initial = null)
+            val messages by remember(orderId) {
+                database.chatMessageDao().observeByOrder(orderId)
+            }.collectAsState(initial = emptyList())
+            val order = received?.order
+            val timeFormat = remember { SimpleDateFormat("HH:mm", Locale("pt", "BR")) }
+
+            ChatScreen(
+                title = if (isProfessional) received?.clientName ?: "Cliente"
+                else order?.professionalName ?: "Profissional",
+                contextTitle = order?.let { "${it.serviceDescription} - ${it.deviceName}" } ?: "Pedido #$orderId",
+                contextStatus = order?.let {
+                    runCatching { OrderStatus.valueOf(it.status) }.getOrDefault(OrderStatus.PENDING)
+                } ?: OrderStatus.PENDING,
+                messages = messages.map {
+                    ChatBubble(it.id.toString(), it.text, it.senderEmail == loggedInEmail, timeFormat.format(Date(it.createdAt)))
+                },
+                quickReplies = if (isProfessional) listOf("Estou a caminho", "Pode confirmar o horário?", "Obrigado!")
+                else listOf("Olá! Tenho uma dúvida", "Qual o melhor horário?", "Obrigado!"),
+                onBack = { navController.popBackStack() },
+                onSend = { text ->
+                    coroutineScope.launch {
+                        database.chatMessageDao().insert(
+                            ChatMessageEntity(
+                                orderId = orderId,
+                                senderEmail = loggedInEmail,
+                                text = text,
+                                createdAt = System.currentTimeMillis()
+                            )
+                        )
+                    }
+                }
+            )
+        }
+
+        composable(Routes.NOTIFICATIONS) {
+            val clientOrders by remember(loggedInEmail) {
+                database.serviceOrderDao().observeByClient(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+            val receivedOrders by remember(loggedInEmail) {
+                database.serviceOrderDao().observeReceivedByProfessional(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+            val incoming by remember(loggedInEmail) {
+                database.chatMessageDao().observeIncoming(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+
+            NotificationsScreen(
+                notifications = buildNotifications(isProfessional, clientOrders, receivedOrders, incoming),
+                onBack = { navController.popBackStack() },
+                onClick = { n ->
+                    navController.navigate(
+                        when {
+                            n.kind == NotificationKind.MESSAGE -> "chat/${n.orderId}"
+                            isProfessional -> "pro_request/${n.orderId}"
+                            else -> "order_detail/${n.orderId}"
+                        }
+                    )
+                }
+            )
+        }
+
+        composable(Routes.PAYMENT) {
+            PaymentMethodsScreen(
+                initialMethod = PaymentPrefs.get(context),
+                onBack = { navController.popBackStack() },
+                onSave = { method ->
+                    PaymentPrefs.set(context, method)
+                    Toast.makeText(context, "Forma de pagamento salva.", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.ABOUT) {
+            AboutScreen(onBack = { navController.popBackStack() })
+        }
+
+        // ---------------- Barra inferior da Home ----------------
+        composable(Routes.EXPLORE) {
+            ProdutoScreen(
+                onNavItemSelected = { item ->
+                    when (item) {
+                        ProdutoNavItem.HOME -> navController.navigateToTab(homeRoute(), homeRoute())
+                        ProdutoNavItem.EXPLORE -> Unit
+                        ProdutoNavItem.ORDERS -> navController.navigateToTab(Routes.ORDERS, homeRoute())
+                        ProdutoNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE, homeRoute())
+                    }
+                }
+            )
+        }
+
+        composable(Routes.ORDERS) {
+            val clientOrders by remember(loggedInEmail) {
+                database.serviceOrderDao().observeByClient(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+            val receivedOrders by remember(loggedInEmail) {
+                database.serviceOrderDao().observeReceivedByProfessional(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+
+            OrdersScreen(
+                orders = if (isProfessional) receivedOrders.map { it.toProUi() }
+                else clientOrders.map { it.toUi() },
+                onOrderClick = { orderId ->
+                    navController.navigate(
+                        if (isProfessional) "pro_request/$orderId" else "order_detail/$orderId"
+                    )
+                },
+                onNavItemSelected = { item ->
+                    when (item) {
+                        HomeNavItem.HOME -> navController.navigateToTab(homeRoute(), homeRoute())
+                        HomeNavItem.EXPLORE -> navController.navigateToTab(Routes.EXPLORE, homeRoute())
+                        HomeNavItem.ORDERS -> Unit
+                        HomeNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE, homeRoute())
+                    }
+                }
+            )
+        }
+
+        // ---------------- Perfil ----------------
+        composable(Routes.PROFILE) {
+            var showMenuDialog by remember { mutableStateOf(false) }
+
+            // O histórico e o contador de serviços vêm dos pedidos reais do Room.
+            val profileOrders by remember(loggedInEmail) {
+                database.serviceOrderDao().observeByClient(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+            val profileReceived by remember(loggedInEmail) {
+                database.serviceOrderDao().observeReceivedByProfessional(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+            val uiOrders = if (isProfessional) profileReceived.map { it.toProUi() }
+            else profileOrders.map { it.toUi() }
+
+            if (showMenuDialog) {
+                AlertDialog(
+                    onDismissRequest = { showMenuDialog = false },
+                    title = { Text("Menu") },
+                    text = {
+                        Column {
+                            TextButton(onClick = {
+                                showMenuDialog = false
+                                navController.navigate(Routes.NOTIFICATIONS)
+                            }) { Text("Notificações") }
+                            TextButton(onClick = {
+                                showMenuDialog = false
+                                navController.navigate(Routes.PAYMENT)
+                            }) { Text("Formas de pagamento") }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showMenuDialog = false
+                            // Esquece a sessão salva e limpa tudo que era da conta anterior.
+                            SessionManager.clear(context)
+                            UserSession.currentUser = null
+                            loggedInFullName = ""
+                            loggedInEmail = ""
+                            isProfessional = false
+                            selectedCategoryIds = emptySet()
+                            selectedPriorityId = ""
+                            proSelectedSpecialties = emptySet()
+                            proWorkDetails = null
+                            proProfileInfo = null
+                            userProfile = buildUserProfile(
+                                fullName = "",
+                                createdAtMillis = System.currentTimeMillis(),
+                                interestCategories = emptyList()
+                            )
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }) { Text("Sair da conta") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showMenuDialog = false }) { Text("Cancelar") }
+                    }
+                )
+            }
+
+            ProfileScreen(
+                profile = userProfile.copy(
+                    completedServices = uiOrders.count { it.status == OrderStatus.COMPLETED },
+                    serviceHistory = uiOrders
+                        .filter { it.status != OrderStatus.CANCELED }
+                        .map { it.toHistoryItem() }
+                ),
+                onMenuClick = { showMenuDialog = true },
+                onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
+                onRequestServiceClick = { navController.navigate("request_service/0") },
+                onSeeAllHistoryClick = { /* TODO: navegar para histórico completo */ }
+            )
+        }
+
+        composable(Routes.EDIT_PROFILE) {
+            EditProfileScreen(
+                initialProfile = userProfile,
+                onBackClick = { navController.popBackStack() },
+                onCancel = { navController.popBackStack() },
+                onSave = { updatedProfile ->
+                    userProfile = updatedProfile
+                    navController.popBackStack()
+                },
+                onChangePhotoClick = { /* TODO: abrir seletor de imagem */ }
+            )
+        }
+    }
+}
