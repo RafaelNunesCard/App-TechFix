@@ -20,6 +20,18 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Chave de assinatura FIXA do APK de teste (arquivo app/debug.keystore).
+    // Assim, toda versão nova instala POR CIMA da anterior, sem precisar
+    // desinstalar o app. (Chave de teste: não serve para publicar na Play Store.)
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             optimization {
