@@ -32,6 +32,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.produtos.ui.explore.ProdutoNavItem
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.techfix.data.ProfilePrefs
 import kotlinx.coroutines.launch
 
 import com.example.techfix.data.AuthRepository
@@ -99,6 +105,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         enableEdgeToEdge()
+        hideSystemNavigationBar()
         setContent {
             TechFixTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -106,6 +113,22 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideSystemNavigationBar()
+    }
+
+    /**
+     * Esconde a barra de 3 botões do Android. Se a pessoa deslizar a
+     * borda de baixo, ela aparece por um instante e some sozinha.
+     */
+    private fun hideSystemNavigationBar() {
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        controller.hide(WindowInsetsCompat.Type.navigationBars())
     }
 }
 
@@ -375,6 +398,8 @@ private fun NavHostController.navigateToTab(route: String, homeRoute: String) {
 @Composable
 fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     val context = LocalContext.current
+    // Sobe 1 sempre que a foto de perfil muda, para as telas recarregarem.
+    var photoVersion by remember { mutableStateOf(0) }
 
     // Held here for now (not persisted). Replace with a real session/profile
     // store once you build one.
@@ -489,7 +514,9 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             LoginScreen(
                 onForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
                 onLogin = { email, password -> authViewModel.login(email, password) },
-                onSocialLogin = { /* TODO */ },
+                onSocialLogin = {
+                    Toast.makeText(context, "Login social em breve. Use e-mail e senha.", Toast.LENGTH_SHORT).show()
+                },
                 onNavigateToSignUp = { navController.navigate(Routes.SIGN_UP) }
             )
         }
@@ -635,13 +662,28 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         composable(Routes.PRO_PROFILE) {
+            val proPhotoPicker = rememberLauncherForActivityResult(
+                ActivityResultContracts.PickVisualMedia()
+            ) { uri ->
+                if (uri != null && ProfilePrefs.savePhoto(context, loggedInEmail, uri) != null) {
+                    photoVersion++
+                }
+            }
+            val proPhoto = remember(photoVersion, loggedInEmail) {
+                ProfilePrefs.photoUri(context, loggedInEmail)
+            }
             ProCreateProfileScreen(
+                photoUri = proPhoto,
                 onBack = { navController.popBackStack() },
                 onContinue = { profileInfo ->
                     proProfileInfo = profileInfo
                     navController.navigate(Routes.PRO_PROFILE_READY)
                 },
-                onUploadPhoto = { /* TODO: launch Photo Picker */ },
+                onUploadPhoto = {
+                    proPhotoPicker.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                },
                 onAddPortfolioItem = { /* TODO: launch Photo Picker for portfolio */ }
             )
         }
@@ -668,9 +710,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                             serviceRadiusKm = details?.serviceRadiusKm ?: 15,
                             availableDayIds = details?.availableDayIds ?: emptySet(),
                             bio = profile?.shortBio.orEmpty(),
-                            // Ainda não existe upload de foto de verdade
-                            // (é só um TODO na tela) — por isso null aqui.
-                            photoUri = null
+                            photoUri = ProfilePrefs.photoUri(context, loggedInEmail)
                         )
 
                         // Aparece em "Profissionais em destaque" na Home dos clientes.
@@ -1005,6 +1045,29 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             val uiOrders = if (isProfessional) profileReceived.map { it.toProUi() }
             else profileOrders.map { it.toUi() }
 
+            // Esquece a sessão salva e limpa tudo que era da conta anterior.
+            val performLogout: () -> Unit = {
+                SessionManager.clear(context)
+                UserSession.currentUser = null
+                loggedInFullName = ""
+                loggedInEmail = ""
+                isProfessional = false
+                selectedCategoryIds = emptySet()
+                selectedPriorityId = ""
+                proSelectedSpecialties = emptySet()
+                proWorkDetails = null
+                proProfileInfo = null
+                userProfile = buildUserProfile(
+                    fullName = "",
+                    createdAtMillis = System.currentTimeMillis(),
+                    interestCategories = emptyList()
+                )
+                navController.navigate(Routes.LOGIN) {
+                    popUpTo(navController.graph.id) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+
             if (showMenuDialog) {
                 AlertDialog(
                     onDismissRequest = { showMenuDialog = false },
@@ -1024,26 +1087,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                     confirmButton = {
                         TextButton(onClick = {
                             showMenuDialog = false
-                            // Esquece a sessão salva e limpa tudo que era da conta anterior.
-                            SessionManager.clear(context)
-                            UserSession.currentUser = null
-                            loggedInFullName = ""
-                            loggedInEmail = ""
-                            isProfessional = false
-                            selectedCategoryIds = emptySet()
-                            selectedPriorityId = ""
-                            proSelectedSpecialties = emptySet()
-                            proWorkDetails = null
-                            proProfileInfo = null
-                            userProfile = buildUserProfile(
-                                fullName = "",
-                                createdAtMillis = System.currentTimeMillis(),
-                                interestCategories = emptyList()
-                            )
-                            navController.navigate(Routes.LOGIN) {
-                                popUpTo(navController.graph.id) { inclusive = true }
-                                launchSingleTop = true
-                            }
+                            performLogout()
                         }) { Text("Sair da conta") }
                     },
                     dismissButton = {
@@ -1052,8 +1096,12 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 )
             }
 
+            val profilePhoto = remember(photoVersion, loggedInEmail) {
+                ProfilePrefs.photoUri(context, loggedInEmail)
+            }
             ProfileScreen(
                 profile = userProfile.copy(
+                    avatarUrl = profilePhoto ?: "",
                     completedServices = uiOrders.count { it.status == OrderStatus.COMPLETED },
                     serviceHistory = uiOrders
                         .filter { it.status != OrderStatus.CANCELED }
@@ -1062,20 +1110,35 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 onMenuClick = { showMenuDialog = true },
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
                 onRequestServiceClick = { navController.navigate("request_service/0") },
-                onSeeAllHistoryClick = { /* TODO: navegar para histórico completo */ }
+                onSeeAllHistoryClick = { /* TODO: navegar para histórico completo */ },
+                onLogoutClick = { performLogout() }
             )
         }
 
         composable(Routes.EDIT_PROFILE) {
+            val photoPicker = rememberLauncherForActivityResult(
+                ActivityResultContracts.PickVisualMedia()
+            ) { uri ->
+                if (uri != null && ProfilePrefs.savePhoto(context, loggedInEmail, uri) != null) {
+                    photoVersion++
+                }
+            }
+            val editPhoto = remember(photoVersion, loggedInEmail) {
+                ProfilePrefs.photoUri(context, loggedInEmail)
+            }
             EditProfileScreen(
-                initialProfile = userProfile,
+                initialProfile = userProfile.copy(avatarUrl = editPhoto ?: ""),
                 onBackClick = { navController.popBackStack() },
                 onCancel = { navController.popBackStack() },
                 onSave = { updatedProfile ->
                     userProfile = updatedProfile
                     navController.popBackStack()
                 },
-                onChangePhotoClick = { /* TODO: abrir seletor de imagem */ }
+                onChangePhotoClick = {
+                    photoPicker.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }
             )
         }
     }
