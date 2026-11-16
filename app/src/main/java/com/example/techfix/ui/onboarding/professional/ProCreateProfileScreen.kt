@@ -57,8 +57,8 @@ fun ProCreateProfileScreen(
             ProStepHeader(
                 step = currentStep,
                 totalSteps = totalSteps,
-                title = "Create your profile",
-                subtitle = "How should clients see you? Build your professional presence below with a real photo."
+                title = "Crie seu perfil",
+                subtitle = "Como os clientes vão ver você? Monte seu perfil profissional com uma foto real."
             )
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -93,14 +93,14 @@ fun ProCreateProfileScreen(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(text = "Upload Profile Photo", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text(text = "JPG or PNG, max 5MB.", color = TextLabel, fontSize = 11.sp)
+                            Text(text = "Enviar foto de perfil", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text(text = "JPG ou PNG, até 5 MB.", color = TextLabel, fontSize = 11.sp)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    FieldLabel(text = "Full Name")
+                    FieldLabel(text = "Nome completo")
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = fullName,
@@ -113,7 +113,7 @@ fun ProCreateProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    FieldLabel(text = "Short Biography / Pitch")
+                    FieldLabel(text = "Biografia curta / apresentação")
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = shortBio,
@@ -131,7 +131,7 @@ fun ProCreateProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    FieldLabel(text = "Portfolio Items (Upload Jobs)")
+                    FieldLabel(text = "Portfólio (trabalhos realizados)")
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         repeat(portfolioItemCount) {
@@ -166,7 +166,7 @@ fun ProCreateProfileScreen(
             ProBottomNavBar {
                 ProBackButton(onClick = onBack)
                 ProPrimaryButton(
-                    text = "Continue",
+                    text = "Continuar",
                     enabled = canContinue,
                     modifier = Modifier.weight(1f),
                     onClick = { onContinue(ProProfileInfo(fullName, shortBio, portfolioItemCount)) }
