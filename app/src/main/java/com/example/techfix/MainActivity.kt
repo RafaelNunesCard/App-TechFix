@@ -150,39 +150,39 @@ private object Routes {
 }
 
 private val categoryLabels = mapOf(
-    "computers" to "Computers",
-    "phones" to "Phones",
-    "wifi" to "Wi-Fi & Networks",
-    "electrical" to "Electrical",
-    "plumbing" to "Plumbing",
-    "maintenance" to "Maintenance",
-    "painting" to "Painting",
-    "photography" to "Photography"
+    "computers" to "Computadores",
+    "phones" to "Celulares",
+    "wifi" to "Wi-Fi e Redes",
+    "electrical" to "Elétrica",
+    "plumbing" to "Hidráulica",
+    "maintenance" to "Manutenção",
+    "painting" to "Pintura",
+    "photography" to "Fotografia"
 )
 
 private val priorityLabels = mapOf(
-    "fastest_response" to "Fastest Response Professionals first",
-    "best_price" to "Best Price Match first",
-    "highest_rated" to "Highest Rated Professionals first",
-    "nearest_distance" to "Nearest Distance first"
+    "fastest_response" to "Resposta mais rápida primeiro",
+    "best_price" to "Melhor preço primeiro",
+    "highest_rated" to "Mais bem avaliados primeiro",
+    "nearest_distance" to "Mais perto primeiro"
 )
 
 private val weekDayShortLabels = linkedMapOf(
-    "mon" to "Mon", "tue" to "Tue", "wed" to "Wed", "thu" to "Thu",
-    "fri" to "Fri", "sat" to "Sat", "sun" to "Sun"
+    "mon" to "Seg", "tue" to "Ter", "wed" to "Qua", "thu" to "Qui",
+    "fri" to "Sex", "sat" to "Sáb", "sun" to "Dom"
 )
 
-/** Turns a set of day ids into something like "Mon-Fri Availability". */
+/** Turns a set of day ids into something like "Seg-Sex disponível". */
 private fun availabilityLabel(dayIds: Set<String>): String {
-    if (dayIds.isEmpty()) return "No availability set"
+    if (dayIds.isEmpty()) return "Sem disponibilidade definida"
     val orderedDays = weekDayShortLabels.keys.filter { it in dayIds }
     return if (orderedDays.size >= 2 &&
         weekDayShortLabels.keys.toList().indexOf(orderedDays.first()) + orderedDays.size - 1 ==
         weekDayShortLabels.keys.toList().indexOf(orderedDays.last())
     ) {
-        "${weekDayShortLabels[orderedDays.first()]}-${weekDayShortLabels[orderedDays.last()]} Availability"
+        "${weekDayShortLabels[orderedDays.first()]}-${weekDayShortLabels[orderedDays.last()]} disponível"
     } else {
-        orderedDays.joinToString(", ") { weekDayShortLabels[it] ?: it } + " Availability"
+        orderedDays.joinToString(", ") { weekDayShortLabels[it] ?: it } + " disponível"
     }
 }
 
@@ -584,7 +584,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             OnboardingSummaryScreen(
                 selectedInterests = selectedCategoryIds.mapNotNull { categoryLabels[it] },
                 matchingPriorityLabel = priorityLabels[selectedPriorityId]
-                    ?: "Highest Rated Professionals first",
+                    ?: "Mais bem avaliados primeiro",
                 onStartExploring = {
                     // NOVO: salva de verdade no Room antes de ir pra Home.
                     coroutineScope.launch {
