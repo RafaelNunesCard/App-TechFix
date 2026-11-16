@@ -97,17 +97,11 @@ fun ProdutoScreen() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo_badge),
-                    contentDescription = "Icon da plataforma",
-                    modifier = Modifier.size(50.dp)
-                )
                 Text(text = "Techfix",
                     fontFamily = SoraFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
-                    color = Color.White,
-                    modifier = Modifier.padding(start = 8.dp))
+                    color = Color.White)
             }
 
         }
