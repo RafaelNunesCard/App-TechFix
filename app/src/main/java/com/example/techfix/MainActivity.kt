@@ -52,6 +52,7 @@ import com.example.techfix.data.local.ProfessionalEntity
 import com.example.techfix.data.local.ReceivedOrder
 import com.example.techfix.data.local.ServiceOrderEntity
 import com.example.techfix.data.local.TechFixDatabase
+import com.example.techfix.ui.debug.DbViewerScreen
 import com.example.techfix.model.ServiceHistoryItem
 import com.example.techfix.model.ServiceStatus
 import com.example.techfix.model.UserProfile
@@ -162,6 +163,7 @@ private object Routes {
     const val CHAT = "chat/{orderId}"
     const val NOTIFICATIONS = "notifications"
     const val PAYMENT = "payment"
+    const val DB_VIEWER = "db_viewer"
 
     // Barra inferior da Home (nova adição)
     const val EXPLORE = "explore"
@@ -986,6 +988,10 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
+        composable(Routes.DB_VIEWER) {
+            DbViewerScreen(database = database, onBack = { navController.popBackStack() })
+        }
+
         composable(Routes.ABOUT) {
             AboutScreen(onBack = { navController.popBackStack() })
         }
@@ -1116,7 +1122,8 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
                 onRequestServiceClick = { navController.navigate("request_service/0") },
                 onSeeAllHistoryClick = { navController.navigateToTab(Routes.ORDERS, homeRoute()) },
-                onLogoutClick = { performLogout() }
+                onLogoutClick = { performLogout() },
+                onOpenDbViewer = { navController.navigate(Routes.DB_VIEWER) }
             )
         }
 
