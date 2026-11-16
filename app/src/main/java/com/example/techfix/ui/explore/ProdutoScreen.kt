@@ -1,96 +1,135 @@
 package com.example.produtos.ui.explore
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material3.Divider
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.techfix.ui.home.Professional
 import com.example.techfix.ui.theme.BackColor
-import com.example.techfix.R
 import com.example.techfix.ui.theme.SoraFamily
-import kotlin.collections.listOf
+import java.util.Locale
 
 val LaranjaTechFix = Color(0xFFFF6B35)
 
 // ---- Design tokens padronizados com a HomeScreen ----
 private val CardDark = Color(0xFF1C1C1E)
 private val CardBorderIdle = Color(0xFF2C2C2E)
+private val SurfaceField = Color(0xFF18181B)
 private val TextSecondary = Color(0xFFA0A0A5)
-
-data class Produto(
-    val nome: String,
-    val categoria: String,
-    val avaliacao: Double,
-    val preco: String,
-    val fotoRes: Int
-)
-
-val categorias = listOf("Eletrodomésticos", "Veículos", "Industrial")
-
-val produtos = listOf(
-    Produto("Renata Costa", "Eletrodomésticos", 4.6, "$38", R.drawable.placeholder_perfil),
-    Produto("Fábio Nunes", "Eletrodomésticos", 4.8, "$52", R.drawable.placeholder_perfil),
-    Produto("Juliana Ramos", "Eletrodomésticos", 4.7, "$40", R.drawable.placeholder_perfil),
-    Produto("Diego Moreira", "Eletrodomésticos", 4.5, "$35", R.drawable.placeholder_perfil),
-    Produto("Patrícia Lima", "Eletrodomésticos", 4.9, "$60", R.drawable.placeholder_perfil),
-    Produto("Rafael Teixeira", "Eletrodomésticos", 4.4, "$30", R.drawable.placeholder_perfil),
-
-    // ---------- VEHICLE ----------
-    Produto("Bruno Cardoso", "Veículos", 4.6, "$95", R.drawable.placeholder_perfil),
-    Produto("Camila Duarte", "Veículos", 4.9, "$150", R.drawable.placeholder_perfil),
-    Produto("Eduardo Farias", "Veículos", 4.7, "$110", R.drawable.placeholder_perfil),
-    Produto("Larissa Pinto", "Veículos", 4.5, "$85", R.drawable.placeholder_perfil),
-    Produto("Thiago Azevedo", "Veículos", 4.8, "$130", R.drawable.placeholder_perfil),
-    Produto("Vanessa Rocha", "Veículos", 4.6, "$99", R.drawable.placeholder_perfil),
-
-    // ---------- INDUSTRIAL ----------
-    Produto("Simone Barros", "Industrial", 4.9, "$280", R.drawable.placeholder_perfil),
-    Produto("André Vasconcelos", "Industrial", 4.5, "$175", R.drawable.placeholder_perfil),
-    Produto("Beatriz Monteiro", "Industrial", 4.8, "$240", R.drawable.placeholder_perfil),
-    Produto("Gustavo Peixoto", "Industrial", 4.6, "$195", R.drawable.placeholder_perfil),
-    Produto("Isabela Correia", "Industrial", 4.7, "$220", R.drawable.placeholder_perfil),
-    Produto("João Silva", "Eletrodomésticos", 4.9, "$45", R.drawable.eletricista_joao),
-    Produto("Marina Souza", "Veículos", 4.8, "$120", R.drawable.marina_mecanica),
-    Produto("Carlos Andrade", "Industrial", 4.7, "$210", R.drawable.carlos_industrial)
-)
+private val TextMuted = Color(0xFF71717A)
+private val GreenOk = Color(0xFF34C759)
+private val AccentGradient = Brush.linearGradient(listOf(Color(0xFFFF8A3D), Color(0xFFFF3D68)))
 
 enum class ProdutoNavItem { HOME, EXPLORE, ORDERS, PROFILE }
 
+private enum class SortOption(val label: String) {
+    RATING("Melhor avaliação"),
+    DISTANCE("Mais próximo"),
+    REVIEWS("Mais avaliações")
+}
+
+/** Filtros do botão "ajustar" da busca. */
+private data class ExploreFilters(
+    val sort: SortOption = SortOption.RATING,
+    val onlyAvailable: Boolean = false,
+    /** Em km. 10 = sem limite. */
+    val maxKm: Float = 10f,
+    val minRating: Double = 0.0
+) {
+    val isActive: Boolean
+        get() = sort != SortOption.RATING || onlyAvailable || maxKm < 10f || minRating > 0.0
+}
+
+private fun Double.oneDecimal(): String = String.format(Locale("pt", "BR"), "%.1f", this)
+
+private fun initialsOf(name: String): String =
+    name.trim().split(" ").filter { it.isNotBlank() }.take(2)
+        .joinToString("") { it.first().uppercase() }.ifBlank { "T" }
+
 @Composable
 fun ProdutoScreen(
+    professionals: List<Professional> = emptyList(),
+    onProfessionalClick: (String) -> Unit = {},
     onNavItemSelected: (ProdutoNavItem) -> Unit = {}
 ) {
     var searchText by remember { mutableStateOf("") }
-    var categoriaSelecionada by remember { mutableStateOf("Eletrodomésticos") }
+    var selectedSpecialty by remember { mutableStateOf<String?>(null) }
+    var filters by remember { mutableStateOf(ExploreFilters()) }
+    var showFilters by remember { mutableStateOf(false) }
+    var showAll by remember { mutableStateOf(false) }
     var selectedNavItem by remember { mutableStateOf(ProdutoNavItem.EXPLORE) }
 
-    val produtosFiltrados = produtos.filter { produto ->
-        val combinaCategoria = produto.categoria == categoriaSelecionada
-        val combinaBusca = produto.nome.contains(searchText, ignoreCase = true)
-        combinaCategoria && combinaBusca
+    val specialties = remember(professionals) { professionals.map { it.specialty }.distinct().sorted() }
+    val isSearching = searchText.isNotBlank()
+
+    val results = remember(professionals, searchText, selectedSpecialty, filters) {
+        val query = searchText.trim()
+        professionals
+            .filter { query.isNotEmpty() || selectedSpecialty == null || it.specialty == selectedSpecialty }
+            .filter {
+                query.isEmpty() ||
+                    it.name.contains(query, ignoreCase = true) ||
+                    it.specialty.contains(query, ignoreCase = true)
+            }
+            .filter { !filters.onlyAvailable || it.available }
+            .filter { filters.maxKm >= 10f || it.distanceKm <= filters.maxKm }
+            .filter { it.rating >= filters.minRating }
+            .let { list ->
+                when (filters.sort) {
+                    SortOption.RATING -> list.sortedWith(compareByDescending<Professional> { it.rating }.thenByDescending { it.reviewCount })
+                    SortOption.DISTANCE -> list.sortedBy { it.distanceKm }
+                    SortOption.REVIEWS -> list.sortedByDescending { it.reviewCount }
+                }
+            }
+    }
+
+    if (showFilters) {
+        FiltersDialog(
+            filters = filters,
+            onChange = { filters = it },
+            onClear = { filters = ExploreFilters() },
+            onDismiss = { showFilters = false }
+        )
     }
 
     Column(
@@ -102,133 +141,109 @@ fun ProdutoScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
         ) {
             // ---------- HEADER ----------
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
-                    .background(BackColor)
+                    .statusBarsPadding()
+                    .height(72.dp)
                     .padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Techfix",
-                        fontFamily = SoraFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp,
-                        color = Color.White
-                    )
-                }
+                Text(
+                    text = "Techfix",
+                    fontFamily = SoraFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = Color.White
+                )
             }
 
             // ---------- SAUDAÇÃO + BUSCA ----------
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BackColor)
-                    .padding(horizontal = 20.dp)
-            ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
                 Text(
                     text = "Olá, bem-vindo de volta 👋",
                     color = Color(0xFFA1A1AA),
                     fontSize = 13.sp
                 )
-
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
                     text = "O que precisa de conserto hoje?",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.sp
                 )
-
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFF18181B))
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                        .background(SurfaceField)
+                        .padding(start = 16.dp, top = 6.dp, bottom = 6.dp, end = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Buscar",
-                        tint = Color(0xFF71717A),
+                        tint = TextMuted,
                         modifier = Modifier.size(18.dp)
                     )
-
                     Spacer(modifier = Modifier.width(8.dp))
-
                     BasicTextField(
                         value = searchText,
                         onValueChange = { searchText = it },
-                        textStyle = TextStyle(color = Color.White, fontSize = 13.sp),
+                        singleLine = true,
+                        textStyle = TextStyle(color = Color.White, fontSize = 14.sp),
+                        cursorBrush = SolidColor(LaranjaTechFix),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { }),
                         modifier = Modifier.weight(1f),
                         decorationBox = { innerTextField ->
                             if (searchText.isEmpty()) {
                                 Text(
-                                    text = "Buscar reparos, sistemas, pintura...",
-                                    color = Color(0xFF71717A),
-                                    fontSize = 13.sp
+                                    text = "Buscar nome ou especialidade...",
+                                    color = TextMuted,
+                                    fontSize = 14.sp
                                 )
                             }
                             innerTextField()
                         }
                     )
-
-                    Icon(
-                        imageVector = Icons.Default.Tune,
-                        contentDescription = "Filtros",
-                        tint = Color(0xFF71717A),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // ---------- CATEGORIAS ----------
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BackColor)
-                    .padding(horizontal = 20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Categorias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text("Ver tudo", color = LaranjaTechFix, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    categorias.forEach { categoria ->
-                        val ativo = categoria == categoriaSelecionada
-                        Row(
+                    if (searchText.isNotEmpty()) {
+                        Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(50))
-                                .background(if (ativo) LaranjaTechFix else Color(0xFF18181B))
-                                .clickable { categoriaSelecionada = categoria }
-                                .padding(horizontal = 16.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .clickable { searchText = "" },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = categoria,
-                                color = if (ativo) Color.White else Color(0xFFA1A1AA),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium
+                            Icon(Icons.Default.Close, contentDescription = "Limpar busca", tint = TextMuted, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .clickable { showFilters = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Tune,
+                            contentDescription = "Ajustar filtros",
+                            tint = if (filters.isActive) LaranjaTechFix else TextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        if (filters.isActive) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(top = 8.dp, end = 8.dp)
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(LaranjaTechFix)
                             )
                         }
                     }
@@ -237,62 +252,152 @@ fun ProdutoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ---------- SERVIÇOS EM DESTAQUE ----------
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BackColor)
-                    .padding(start = 20.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Serviços em destaque", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text("Em alta", color = LaranjaTechFix, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                }
+            if (isSearching) {
+                // ---------- RESULTADOS DA BUSCA ----------
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+                    Text(
+                        text = "Resultados para “${searchText.trim()}”",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = if (results.size == 1) "1 profissional encontrado" else "${results.size} profissionais encontrados",
+                        color = TextMuted,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(produtosFiltrados) { produto ->
-                        ProdutoCard(produto)
+                    if (results.isEmpty()) {
+                        EmptyResults(
+                            hasFilters = filters.isActive,
+                            onClear = { filters = ExploreFilters() }
+                        )
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            results.forEach { pro ->
+                                ProfessionalRow(pro, onClick = { onProfessionalClick(pro.id) })
+                            }
+                        }
                     }
                 }
-            }
+            } else {
+                // ---------- CATEGORIAS (carrossel) ----------
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Categorias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(
+                            "Ver tudo",
+                            color = LaranjaTechFix,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.clickable {
+                                selectedSpecialty = null
+                                showAll = true
+                            }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            CategoryChip("Todas", selectedSpecialty == null) { selectedSpecialty = null }
+                        }
+                        items(specialties) { specialty ->
+                            CategoryChip(specialty, specialty == selectedSpecialty) { selectedSpecialty = specialty }
+                        }
+                    }
+                }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            // ---------- ESTATÍSTICAS ----------
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BackColor)
-                    .padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                // ---------- PROFISSIONAIS ----------
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = if (selectedSpecialty == null) "Profissionais em destaque" else selectedSpecialty!!,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (results.size > 1) {
+                            Text(
+                                text = if (showAll) "Ver menos" else "Ver tudo",
+                                color = LaranjaTechFix,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.clickable { showAll = !showAll }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    if (results.isEmpty()) {
+                        Box(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            EmptyResults(
+                                hasFilters = filters.isActive || selectedSpecialty != null,
+                                onClear = {
+                                    filters = ExploreFilters()
+                                    selectedSpecialty = null
+                                }
+                            )
+                        }
+                    } else if (showAll) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            results.forEach { pro ->
+                                ProfessionalRow(pro, onClick = { onProfessionalClick(pro.id) })
+                            }
+                        }
+                    } else {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(results) { pro ->
+                                ProfessionalCard(pro, onClick = { onProfessionalClick(pro.id) })
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // ---------- ESTATÍSTICAS (dados reais da lista) ----------
+                val average = if (professionals.isEmpty()) null else professionals.map { it.rating }.average()
                 Row(
                     modifier = Modifier
+                        .padding(horizontal = 20.dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFF18181B))
-                        .padding(vertical = 16.dp)
+                        .background(SurfaceField)
+                        .height(IntrinsicSize.Min)
+                        .padding(vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    EstatisticaItem("3 anos", "EXPERIÊNCIA", Modifier.weight(1f))
-                    Divider(
-                        color = Color.White.copy(alpha = 0.1f),
-                        modifier = Modifier.fillMaxHeight().width(1.dp)
-                    )
-                    EstatisticaItem("600+", "CUSTOMERS", Modifier.weight(1f))
-                    Divider(
-                        color = Color.White.copy(alpha = 0.1f),
-                        modifier = Modifier.fillMaxHeight().width(1.dp)
-                    )
-                    EstatisticaItem("12+", "SPECIALTIES", Modifier.weight(1f))
+                    StatItem("${professionals.size}", "PROFISSIONAIS", Modifier.weight(1f))
+                    Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.1f)))
+                    StatItem("${specialties.size}", "ESPECIALIDADES", Modifier.weight(1f))
+                    Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.1f)))
+                    StatItem(average?.oneDecimal() ?: "—", "NOTA MÉDIA", Modifier.weight(1f))
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
         // ---------- NAVEGAÇÃO INFERIOR PADRONIZADA ----------
@@ -306,85 +411,317 @@ fun ProdutoScreen(
     }
 }
 
+// =========================================================================================
+// COMPONENTES
+// =========================================================================================
+
 @Composable
-fun ProdutoCard(produto: Produto) {
-    Column(
+private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Box(
         modifier = Modifier
-            .width(165.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF18181B))
+            .clip(RoundedCornerShape(50))
+            .background(if (selected) LaranjaTechFix else SurfaceField)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
+        Text(
+            text = label,
+            color = if (selected) Color.White else Color(0xFFA1A1AA),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun Avatar(name: String, size: Int) {
+    Box(
+        modifier = Modifier
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(AccentGradient),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = initialsOf(name),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = (size / 2.8f).sp
+        )
+    }
+}
+
+@Composable
+private fun AvailabilityLabel(available: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(90.dp)
+                .size(7.dp)
+                .clip(CircleShape)
+                .background(if (available) GreenOk else TextMuted)
+        )
+        Spacer(modifier = Modifier.width(5.dp))
+        Text(
+            text = if (available) "Disponível" else "Ocupado",
+            color = if (available) GreenOk else TextMuted,
+            fontSize = 11.sp
+        )
+    }
+}
+
+@Composable
+private fun RatingLabel(pro: Professional) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = Icons.Default.Star,
+            contentDescription = null,
+            tint = Color(0xFFFACC15),
+            modifier = Modifier.size(13.dp)
+        )
+        Spacer(modifier = Modifier.width(3.dp))
+        Text(
+            text = "${pro.rating.oneDecimal()} (${pro.reviewCount})",
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+/** Card do carrossel. */
+@Composable
+private fun ProfessionalCard(pro: Professional, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .width(170.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(SurfaceField)
+            .clickable(onClick = onClick)
+            .padding(14.dp)
+    ) {
+        Avatar(pro.name, 52)
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = pro.specialty.uppercase(),
+            color = LaranjaTechFix,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = pro.name,
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        RatingLabel(pro)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = "${pro.distanceKm.oneDecimal()} km de você", color = TextSecondary, fontSize = 11.sp)
+        Spacer(modifier = Modifier.height(8.dp))
+        AvailabilityLabel(pro.available)
+    }
+}
+
+/** Linha da lista (resultados da busca e "Ver tudo"). */
+@Composable
+private fun ProfessionalRow(pro: Professional, onClick: () -> Unit) {
+    Surface(
+        color = SurfaceField,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, CardBorderIdle),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = produto.fotoRes),
-                contentDescription = produto.nome,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(8.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(horizontal = 8.dp, vertical = 3.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = null,
-                    tint = Color(0xFFFACC15),
-                    modifier = Modifier.size(11.dp)
+            Avatar(pro.name, 48)
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = pro.name,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.width(3.dp))
-                Text("${produto.avaliacao}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    text = pro.specialty,
+                    color = LaranjaTechFix,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RatingLabel(pro)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(text = "${pro.distanceKm.oneDecimal()} km", color = TextSecondary, fontSize = 11.sp)
+                }
             }
-        }
-
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = produto.categoria.uppercase(),
-                color = LaranjaTechFix,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = produto.nome,
-                color = Color.White,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Column {
-                Text("A PARTIR DE", color = Color(0xFF71717A), fontSize = 9.sp)
-                Text(produto.preco, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
+            AvailabilityLabel(pro.available)
         }
     }
 }
 
 @Composable
-fun EstatisticaItem(valor: String, rotulo: String, modifier: Modifier = Modifier) {
+private fun EmptyResults(hasFilters: Boolean, onClear: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(SurfaceField)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Nenhum profissional encontrado", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = if (hasFilters) "Tente remover alguns filtros." else "Tente outro nome ou especialidade.",
+            color = TextSecondary,
+            fontSize = 12.sp
+        )
+        if (hasFilters) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Limpar filtros",
+                color = LaranjaTechFix,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                modifier = Modifier.clickable(onClick = onClear).padding(8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatItem(valor: String, rotulo: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(valor, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(2.dp))
-        Text(rotulo, color = Color(0xFF71717A), fontSize = 10.sp)
+        Text(rotulo, color = TextMuted, fontSize = 10.sp, maxLines = 1)
     }
 }
+
+// =========================================================================================
+// FILTROS ("ajustar")
+// =========================================================================================
+
+@Composable
+private fun FiltersDialog(
+    filters: ExploreFilters,
+    onChange: (ExploreFilters) -> Unit,
+    onClear: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = CardDark,
+        title = { Text("Ajustar busca", color = Color.White, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterTitle("Ordenar por")
+                SortOption.values().forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { onChange(filters.copy(sort = option)) }
+                            .padding(vertical = 8.dp, horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(if (filters.sort == option) LaranjaTechFix else CardBorderIdle),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (filters.sort == option) {
+                                Box(Modifier.size(7.dp).clip(CircleShape).background(Color.White))
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(option.label, color = Color.White, fontSize = 14.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                FilterTitle("Distância máxima")
+                Text(
+                    text = if (filters.maxKm >= 10f) "Qualquer distância" else "Até ${filters.maxKm.toInt()} km",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
+                Slider(
+                    value = filters.maxKm,
+                    onValueChange = { onChange(filters.copy(maxKm = it.toInt().coerceIn(1, 10).toFloat())) },
+                    valueRange = 1f..10f,
+                    steps = 8,
+                    colors = SliderDefaults.colors(
+                        thumbColor = LaranjaTechFix,
+                        activeTrackColor = LaranjaTechFix,
+                        inactiveTrackColor = CardBorderIdle
+                    )
+                )
+
+                FilterTitle("Avaliação mínima")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(0.0 to "Todas", 4.5 to "4,5+", 4.8 to "4,8+").forEach { (value, label) ->
+                        CategoryChip(label, filters.minRating == value) { onChange(filters.copy(minRating = value)) }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Somente disponíveis agora", color = Color.White, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = filters.onlyAvailable,
+                        onCheckedChange = { onChange(filters.copy(onlyAvailable = it)) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = LaranjaTechFix,
+                            uncheckedThumbColor = TextSecondary,
+                            uncheckedTrackColor = CardBorderIdle
+                        )
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Aplicar", color = LaranjaTechFix, fontWeight = FontWeight.Bold) }
+        },
+        dismissButton = {
+            TextButton(onClick = onClear) { Text("Limpar", color = TextSecondary) }
+        }
+    )
+}
+
+@Composable
+private fun FilterTitle(text: String) {
+    Text(text, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+}
+
+// =========================================================================================
+// BARRA INFERIOR
+// =========================================================================================
 
 @Composable
 private fun ProdutoBottomNav(
@@ -395,33 +732,14 @@ private fun ProdutoBottomNav(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            NavItem(
-                icon = Icons.Default.Home,
-                label = "Início",
-                selected = selected == ProdutoNavItem.HOME,
-                onClick = { onItemSelected(ProdutoNavItem.HOME) }
-            )
-            NavItem(
-                icon = Icons.Default.Search,
-                label = "Explorar",
-                selected = selected == ProdutoNavItem.EXPLORE,
-                onClick = { onItemSelected(ProdutoNavItem.EXPLORE) }
-            )
-            NavItem(
-                icon = Icons.Outlined.Receipt,
-                label = "Pedidos",
-                selected = selected == ProdutoNavItem.ORDERS,
-                onClick = { onItemSelected(ProdutoNavItem.ORDERS) }
-            )
-            NavItem(
-                icon = Icons.Default.Person,
-                label = "Perfil",
-                selected = selected == ProdutoNavItem.PROFILE,
-                onClick = { onItemSelected(ProdutoNavItem.PROFILE) }
-            )
+            NavItem(Icons.Default.Home, "Início", selected == ProdutoNavItem.HOME) { onItemSelected(ProdutoNavItem.HOME) }
+            NavItem(Icons.Default.Search, "Explorar", selected == ProdutoNavItem.EXPLORE) { onItemSelected(ProdutoNavItem.EXPLORE) }
+            NavItem(Icons.Outlined.Receipt, "Pedidos", selected == ProdutoNavItem.ORDERS) { onItemSelected(ProdutoNavItem.ORDERS) }
+            NavItem(Icons.Default.Person, "Perfil", selected == ProdutoNavItem.PROFILE) { onItemSelected(ProdutoNavItem.PROFILE) }
         }
     }
 }
