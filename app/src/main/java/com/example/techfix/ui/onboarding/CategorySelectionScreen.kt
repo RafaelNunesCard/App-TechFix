@@ -44,14 +44,14 @@ data class ServiceCategory(
 )
 
 private val allCategories = listOf(
-    ServiceCategory("computers", "Computers", Icons.Outlined.Computer),
-    ServiceCategory("phones", "Phones", Icons.Outlined.Smartphone),
-    ServiceCategory("wifi", "Wi-Fi & Networks", Icons.Outlined.Wifi),
-    ServiceCategory("electrical", "Electrical", Icons.Outlined.Bolt),
-    ServiceCategory("plumbing", "Plumbing", Icons.Outlined.Plumbing),
-    ServiceCategory("maintenance", "Maintenance", Icons.Outlined.Build),
-    ServiceCategory("painting", "Painting", Icons.Outlined.FormatPaint),
-    ServiceCategory("photography", "Photography", Icons.Outlined.CameraAlt)
+    ServiceCategory("computers", "Computadores", Icons.Outlined.Computer),
+    ServiceCategory("phones", "Celulares", Icons.Outlined.Smartphone),
+    ServiceCategory("wifi", "Wi-Fi e Redes", Icons.Outlined.Wifi),
+    ServiceCategory("electrical", "Elétrica", Icons.Outlined.Bolt),
+    ServiceCategory("plumbing", "Hidráulica", Icons.Outlined.Plumbing),
+    ServiceCategory("maintenance", "Manutenção", Icons.Outlined.Build),
+    ServiceCategory("painting", "Pintura", Icons.Outlined.FormatPaint),
+    ServiceCategory("photography", "Fotografia", Icons.Outlined.CameraAlt)
 )
 
 /**
@@ -83,7 +83,7 @@ fun CategorySelectionScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "STEP $currentStep OF $totalSteps",
+                text = "PASSO $currentStep DE $totalSteps",
                 color = AccentEnd,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -93,7 +93,7 @@ fun CategorySelectionScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "What are you looking for?",
+                text = "O que você procura?",
                 color = TextPrimary,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
@@ -103,7 +103,7 @@ fun CategorySelectionScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Select the categories that interest you. We'll curate the top technicians and professionals in these zones.",
+                text = "Escolha as categorias que te interessam. Vamos destacar os melhores profissionais dessas áreas.",
                 color = TextSecondary,
                 fontSize = 13.sp,
                 lineHeight = 18.sp
@@ -258,7 +258,7 @@ private fun BackButton(onClick: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Back",
+                text = "Voltar",
                 color = TextPrimary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium
@@ -296,7 +296,7 @@ private fun ContinueButton(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Continue",
+                text = "Continuar",
                 color = Color.White,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold
