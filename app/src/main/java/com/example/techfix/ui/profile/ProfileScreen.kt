@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.automirrored.filled.Logout
 import coil.compose.AsyncImage
 import com.example.techfix.R
 import com.example.techfix.model.SampleData
@@ -41,6 +42,7 @@ fun ProfileScreen(
     onEditProfileClick: () -> Unit = {},
     onRequestServiceClick: () -> Unit = {},
     onSeeAllHistoryClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {},
 ) {
     Scaffold(
         containerColor = TechFixBackground,
@@ -140,6 +142,24 @@ fun ProfileScreen(
             }
 
             item {
+                OutlinedButton(
+                    onClick = onLogoutClick,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(50),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, TechFixRed),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TechFixRed)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Sair da conta", fontWeight = FontWeight.SemiBold)
+                }
+            }
+
+            item {
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "TechFix • Suporte Especializado",
@@ -186,7 +206,7 @@ private fun ProfileHeaderCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AsyncImage(
-                model = profile.avatarUrl,
+                model = profile.avatarUrl.ifBlank { R.drawable.placeholder_perfil },
                 contentDescription = "Foto de perfil",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
