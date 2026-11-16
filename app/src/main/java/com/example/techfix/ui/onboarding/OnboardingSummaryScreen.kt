@@ -1,5 +1,7 @@
 package com.example.techfix.ui.onboarding
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -55,6 +57,7 @@ fun OnboardingSummaryScreen(
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
         ) {
+        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Spacer(modifier = Modifier.height(24.dp))
 
             StepProgressBar(totalSteps = totalSteps, currentStep = totalSteps)
@@ -88,7 +91,9 @@ fun OnboardingSummaryScreen(
                 matchingPriorityLabel = matchingPriorityLabel
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             PrimaryGradientButton(
                 text = "COMEÇAR A EXPLORAR",
