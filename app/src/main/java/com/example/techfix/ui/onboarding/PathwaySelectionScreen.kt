@@ -1,5 +1,7 @@
 package com.example.techfix.ui.onboarding
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -62,6 +64,7 @@ fun PathwaySelectionScreen(
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
         ) {
+        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Spacer(modifier = Modifier.height(32.dp))
 
             // Logo + app name
@@ -128,7 +131,9 @@ fun PathwaySelectionScreen(
                 onClick = { selectedPathway = UserPathway.OFFERS_SERVICE }
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             ContinueButton(
                 enabled = selectedPathway != null,
