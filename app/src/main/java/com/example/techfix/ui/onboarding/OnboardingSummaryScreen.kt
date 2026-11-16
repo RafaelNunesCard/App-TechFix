@@ -66,7 +66,7 @@ fun OnboardingSummaryScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "All set!",
+                text = "Tudo pronto!",
                 color = TextPrimary,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold
@@ -75,7 +75,7 @@ fun OnboardingSummaryScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Your customization profile has been securely recorded. You're ready to find top verified specialists.",
+                text = "Suas preferências foram salvas. Você já pode encontrar os melhores especialistas.",
                 color = TextSecondary,
                 fontSize = 13.sp,
                 lineHeight = 18.sp
@@ -91,7 +91,7 @@ fun OnboardingSummaryScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             PrimaryGradientButton(
-                text = "START EXPLORING",
+                text = "COMEÇAR A EXPLORAR",
                 icon = Icons.Default.ArrowForward,
                 onClick = onStartExploring
             )
@@ -99,7 +99,7 @@ fun OnboardingSummaryScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Back to Preferences",
+                text = "Voltar às preferências",
                 color = TextSecondary,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
@@ -178,7 +178,7 @@ private fun SummaryCard(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "ONBOARDING SUMMARY",
+                    text = "RESUMO DO CADASTRO",
                     color = AccentEnd,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -189,7 +189,7 @@ private fun SummaryCard(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "SELECTED INTERESTS",
+                text = "INTERESSES ESCOLHIDOS",
                 color = TextLabel,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -201,7 +201,7 @@ private fun SummaryCard(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "PRIMARY MATCHING PRIORITY",
+                text = "SUA PRIORIDADE",
                 color = TextLabel,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -284,8 +284,8 @@ private fun PrimaryGradientButton(
 private fun OnboardingSummaryScreenPreview() {
     MaterialTheme {
         OnboardingSummaryScreen(
-            selectedInterests = listOf("Computers", "Phones", "Plumbing"),
-            matchingPriorityLabel = "Highest Rated Professionals first",
+            selectedInterests = listOf("Computadores", "Celulares", "Hidráulica"),
+            matchingPriorityLabel = "Mais bem avaliados primeiro",
             onStartExploring = {},
             onBackToPreferences = {}
         )
