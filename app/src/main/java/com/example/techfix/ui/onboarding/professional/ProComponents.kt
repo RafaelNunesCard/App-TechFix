@@ -59,7 +59,7 @@ fun ProStepProgressBar(totalSteps: Int, currentStep: Int) {
 @Composable
 fun ProStepHeader(step: Int, totalSteps: Int, title: String, subtitle: String) {
     Text(
-        text = "STEP $step OF $totalSteps",
+        text = "PASSO $step DE $totalSteps",
         color = AccentEnd,
         fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold,
@@ -97,7 +97,7 @@ fun ProBackButton(onClick: () -> Unit) {
             modifier = Modifier.padding(horizontal = 24.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "Back", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            Text(text = "Voltar", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
