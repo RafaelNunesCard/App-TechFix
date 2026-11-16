@@ -27,13 +27,13 @@ data class SpecialtyGroup(
 private val allSpecialtyGroups = listOf(
     SpecialtyGroup(
         categoryId = "technology",
-        categoryLabel = "Technology",
-        specialties = listOf("Computer Repair", "Phone Screen Replacement", "Network Setup", "Data Recovery", "Smart TV Config")
+        categoryLabel = "Tecnologia",
+        specialties = listOf("Reparo de computadores", "Troca de tela de celular", "Instalação de redes", "Recuperação de dados", "Configuração de Smart TV")
     ),
     SpecialtyGroup(
         categoryId = "electrical",
-        categoryLabel = "Electrical",
-        specialties = listOf("Residential Wiring", "Panel Upgrade", "Smart Home Installation", "Air Conditioning Repair")
+        categoryLabel = "Elétrica",
+        specialties = listOf("Instalação elétrica residencial", "Troca de quadro elétrico", "Casa inteligente", "Reparo de ar-condicionado")
     )
 )
 
@@ -51,7 +51,7 @@ fun ProSpecialtiesScreen(
 ) {
     var selectedSpecialties by remember {
         mutableStateOf(
-            setOf("Computer Repair", "Phone Screen Replacement", "Data Recovery", "Residential Wiring")
+            setOf("Reparo de computadores", "Troca de tela de celular", "Recuperação de dados", "Instalação elétrica residencial")
         )
     }
 
@@ -65,8 +65,8 @@ fun ProSpecialtiesScreen(
             ProStepHeader(
                 step = currentStep,
                 totalSteps = totalSteps,
-                title = "What are your specialties?",
-                subtitle = "We've curated specialty subcategories based on your service choices. Select what fits best."
+                title = "Quais são suas especialidades?",
+                subtitle = "Separamos especialidades de acordo com as categorias escolhidas. Marque as que combinam com você."
             )
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -110,7 +110,7 @@ fun ProSpecialtiesScreen(
             ProBottomNavBar {
                 ProBackButton(onClick = onBack)
                 ProPrimaryButton(
-                    text = "Continue",
+                    text = "Continuar",
                     enabled = selectedSpecialties.isNotEmpty(),
                     modifier = Modifier.weight(1f),
                     onClick = { onContinue(selectedSpecialties) }
