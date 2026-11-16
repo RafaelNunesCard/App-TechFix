@@ -118,7 +118,7 @@ fun EditProfileScreen(
                 Box(contentAlignment = Alignment.BottomEnd) {
 
                     AsyncImage(
-                        model = initialProfile.avatarUrl,
+                        model = initialProfile.avatarUrl.ifBlank { com.example.techfix.R.drawable.placeholder_perfil },
                         contentDescription = "Foto de perfil",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
