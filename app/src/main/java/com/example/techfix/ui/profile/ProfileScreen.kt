@@ -142,7 +142,7 @@ fun ProfileScreen(
             item {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "TechFix • Suporte Especializado • CNPJ 12.345.678/0001-90",
+                    "TechFix • Suporte Especializado",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.4f),
                     modifier = Modifier.fillMaxWidth(),
