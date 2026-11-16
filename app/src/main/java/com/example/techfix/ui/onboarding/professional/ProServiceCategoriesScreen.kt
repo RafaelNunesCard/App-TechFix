@@ -18,16 +18,16 @@ import androidx.compose.ui.unit.dp
 data class ProServiceCategory(val id: String, val label: String, val icon: ImageVector)
 
 private val proServiceCategories = listOf(
-    ProServiceCategory("technology", "Technology", Icons.Outlined.Computer),
-    ProServiceCategory("construction", "Construction", Icons.Outlined.Handyman),
-    ProServiceCategory("electrical", "Electrical", Icons.Outlined.Bolt),
-    ProServiceCategory("plumbing", "Plumbing", Icons.Outlined.Plumbing),
-    ProServiceCategory("cleaning", "Cleaning", Icons.Outlined.CleaningServices),
-    ProServiceCategory("beauty", "Beauty", Icons.Outlined.ContentCut),
-    ProServiceCategory("education", "Education", Icons.Outlined.School),
-    ProServiceCategory("transportation", "Transportation", Icons.Outlined.LocalShipping),
-    ProServiceCategory("maintenance", "Maintenance", Icons.Outlined.Build),
-    ProServiceCategory("painting", "Painting", Icons.Outlined.FormatPaint)
+    ProServiceCategory("technology", "Tecnologia", Icons.Outlined.Computer),
+    ProServiceCategory("construction", "Construção", Icons.Outlined.Handyman),
+    ProServiceCategory("electrical", "Elétrica", Icons.Outlined.Bolt),
+    ProServiceCategory("plumbing", "Hidráulica", Icons.Outlined.Plumbing),
+    ProServiceCategory("cleaning", "Limpeza", Icons.Outlined.CleaningServices),
+    ProServiceCategory("beauty", "Beleza", Icons.Outlined.ContentCut),
+    ProServiceCategory("education", "Educação", Icons.Outlined.School),
+    ProServiceCategory("transportation", "Transporte", Icons.Outlined.LocalShipping),
+    ProServiceCategory("maintenance", "Manutenção", Icons.Outlined.Build),
+    ProServiceCategory("painting", "Pintura", Icons.Outlined.FormatPaint)
 )
 
 /**
@@ -51,8 +51,8 @@ fun ProServiceCategoriesScreen(
             ProStepHeader(
                 step = currentStep,
                 totalSteps = totalSteps,
-                title = "What service do you offer?",
-                subtitle = "Select the primary categories of service you provide. You can select multiple fields."
+                title = "Que serviço você oferece?",
+                subtitle = "Escolha as principais categorias de serviço que você oferece. Pode marcar mais de uma."
             )
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -84,7 +84,7 @@ fun ProServiceCategoriesScreen(
             ProBottomNavBar {
                 ProBackButton(onClick = onBack)
                 ProPrimaryButton(
-                    text = "Continue",
+                    text = "Continuar",
                     enabled = selectedIds.isNotEmpty(),
                     modifier = Modifier.weight(1f),
                     onClick = { onContinue(selectedIds) }
