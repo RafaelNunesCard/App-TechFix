@@ -1,5 +1,7 @@
 package com.example.techfix.ui.onboarding.professional
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,6 +45,7 @@ fun ProProfileReadyScreen(
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
         ) {
+        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Spacer(modifier = Modifier.height(32.dp))
 
             CheckBadge()
@@ -77,7 +80,9 @@ fun ProProfileReadyScreen(
                 availabilityLabel = availabilityLabel
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             ProBottomNavBar {
                 Surface(
