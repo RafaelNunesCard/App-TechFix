@@ -1,5 +1,7 @@
 package com.example.techfix.ui.onboarding.professional
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -57,7 +59,7 @@ fun ProWorkDetailsScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 SectionCard(title = "Nível de experiência") {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         experienceOptions.forEach { option ->
