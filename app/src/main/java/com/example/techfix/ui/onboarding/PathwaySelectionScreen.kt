@@ -92,7 +92,7 @@ fun PathwaySelectionScreen(
             Spacer(modifier = Modifier.height(48.dp))
 
             Text(
-                text = "How do you want to use TechFix?",
+                text = "Como você quer usar a TechFix?",
                 color = TextPrimary,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
@@ -102,7 +102,7 @@ fun PathwaySelectionScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Choose your pathway. You can always change your profile preferences or register as a professional later.",
+                text = "Escolha seu caminho. Você pode mudar suas preferências ou se cadastrar como profissional depois.",
                 color = TextSecondary,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
@@ -112,8 +112,8 @@ fun PathwaySelectionScreen(
 
             PathwayCard(
                 icon = Icons.Outlined.Handyman,
-                title = "I need a service",
-                description = "Find verified local specialists for computer repair, technical network setups, plumbing, and more.",
+                title = "Preciso de um serviço",
+                description = "Encontre especialistas perto de você para computadores, redes, encanamento e mais.",
                 selected = selectedPathway == UserPathway.NEEDS_SERVICE,
                 onClick = { selectedPathway = UserPathway.NEEDS_SERVICE }
             )
@@ -122,8 +122,8 @@ fun PathwaySelectionScreen(
 
             PathwayCard(
                 icon = Icons.Outlined.Build,
-                title = "I want to offer my services",
-                description = "Get client requests, showcase your portfolio, and expand your service business securely on the platform.",
+                title = "Quero oferecer meus serviços",
+                description = "Receba pedidos de clientes, mostre seu portfólio e faça seu negócio crescer com segurança.",
                 selected = selectedPathway == UserPathway.OFFERS_SERVICE,
                 onClick = { selectedPathway = UserPathway.OFFERS_SERVICE }
             )
@@ -232,7 +232,7 @@ private fun SelectionIndicator(selected: Boolean) {
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = "Selecionado",
                 tint = Color.White,
                 modifier = Modifier.size(13.dp)
             )
@@ -275,7 +275,7 @@ private fun ContinueButton(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "Continue",
+                text = "Continuar",
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
