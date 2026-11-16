@@ -43,10 +43,27 @@ fun ProfileScreen(
     onRequestServiceClick: () -> Unit = {},
     onSeeAllHistoryClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
+    onOpenDbViewer: () -> Unit = {},
 ) {
+    // Toque 5x seguidos na logo abre a tela do banco de dados (para a demonstração).
+    val logoTaps = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0) }
+    val lastTapAt = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0L) }
     Scaffold(
         containerColor = TechFixBackground,
-        topBar = { TechFixTopBar(onMenuClick = onMenuClick) }
+        topBar = {
+            TechFixTopBar(
+                onMenuClick = onMenuClick,
+                onLogoClick = {
+                    val now = System.currentTimeMillis()
+                    logoTaps.value = if (now - lastTapAt.value < 800) logoTaps.value + 1 else 1
+                    lastTapAt.value = now
+                    if (logoTaps.value >= 5) {
+                        logoTaps.value = 0
+                        onOpenDbViewer()
+                    }
+                }
+            )
+        }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -175,14 +192,22 @@ fun ProfileScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TechFixTopBar(onMenuClick: () -> Unit) {
+private fun TechFixTopBar(onMenuClick: () -> Unit, onLogoClick: () -> Unit) {
     TopAppBar(
         title = {
             Image(
                 painter = painterResource(R.drawable.logo_techfix),
                 contentDescription = "TechFix",
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.height(34.dp)
+                modifier = Modifier
+                    .height(34.dp)
+                    .clickable(
+                        interactionSource = androidx.compose.runtime.remember {
+                            androidx.compose.foundation.interaction.MutableInteractionSource()
+                        },
+                        indication = null,
+                        onClick = onLogoClick
+                    )
             )
         },
         actions = {
