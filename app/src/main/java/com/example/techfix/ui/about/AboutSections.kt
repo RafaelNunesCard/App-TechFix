@@ -42,10 +42,10 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun OurCompanySection() {
     Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-        SectionEyebrow("OUR COMPANY")
+        SectionEyebrow("NOSSA EMPRESA")
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Bridging the gap between qualified experts and your home",
+            text = "Aproximando bons profissionais da sua casa",
             color = AboutTextPrimary,
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
@@ -53,10 +53,10 @@ fun OurCompanySection() {
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "TechFix was born to disrupt the traditional home maintenance " +
-                "industry. We are a premium technology-driven platform designed to " +
-                "connect homeowners with verified, high-performance technicians " +
-                "seamlessly, safely, and transparently.",
+            text = "A TechFix nasceu para facilitar a manutenção e o suporte técnico. Somos uma plataforma que conecta clientes a profissionais verificados de forma simples, segura e transparente." +
+                "" +
+                "" +
+                "",
             color = AboutTextSecondary,
             fontSize = 14.sp,
             lineHeight = 20.sp
@@ -87,28 +87,28 @@ private data class WhyChooseItem(
 private val whyChooseItems = listOf(
     WhyChooseItem(
         icon = Icons.Outlined.VerifiedUser,
-        title = "Qualified Professionals",
-        description = "Every technician undergoes rigorous credential background checks, technical skill tests, and on-site assessments."
+        title = "Profissionais qualificados",
+        description = "Todo profissional passa por checagem de documentos e avaliação técnica."
     ),
     WhyChooseItem(
         icon = Icons.Outlined.Schedule,
-        title = "Ease of Hiring",
-        description = "Intuitive modern booking process. Match with the ideal specialized repair team within seconds."
+        title = "Contratação fácil",
+        description = "Peça o serviço em poucos toques e encontre o profissional ideal rapidamente."
     ),
     WhyChooseItem(
         icon = Icons.Outlined.Visibility,
-        title = "Full Transparency",
-        description = "Real-time upfront pricing models with absolutely zero hidden fees. Verified community feedback loops."
+        title = "Transparência total",
+        description = "Você vê o valor antes de contratar, sem taxas escondidas, e confere as avaliações de outros clientes."
     )
 )
 
 @Composable
 fun WhyChooseSection() {
     Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-        SectionEyebrow("WHY CHOOSE TECHFIX")
+        SectionEyebrow("POR QUE ESCOLHER A TECHFIX")
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Engineered for reliability and premium standard care",
+            text = "Feita para dar confiança e um atendimento de qualidade",
             color = AboutTextPrimary,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
@@ -157,19 +157,19 @@ private fun WhyChooseCard(item: WhyChooseItem) {
 private data class ValueItem(val number: String, val title: String, val description: String)
 
 private val valueItems = listOf(
-    ValueItem("01", "Commitment to Quality", "Precision engineering in every task. If it isn't resolved flawlessly, we reset it right instantly."),
-    ValueItem("02", "Radical Transparency", "Honest diagnostics and direct price calculations. Complete trust between provider and client."),
-    ValueItem("03", "Respect & Ethics", "Your home is your sacred space. Our professionals operate with the highest behavioral code."),
-    ValueItem("04", "Continuous Innovation", "Utilizing modern diagnostics, intelligent dispatch algorithms, and smart materials to fix things faster.")
+    ValueItem("01", "Compromisso com a qualidade", "Cuidado em cada serviço. Se algo não ficou certo, refazemos."),
+    ValueItem("02", "Transparência", "Diagnóstico honesto e preço claro, para haver confiança entre profissional e cliente."),
+    ValueItem("03", "Respeito e ética", "Sua casa é seu espaço. Nossos profissionais seguem um código de conduta rigoroso."),
+    ValueItem("04", "Inovação contínua", "Usamos tecnologia para ligar você ao profissional certo e resolver mais rápido.")
 )
 
 @Composable
 fun OurValuesSection() {
     Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-        SectionEyebrow("OUR VALUES")
+        SectionEyebrow("NOSSOS VALORES")
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "The principles guiding every fix we execute",
+            text = "Os princípios por trás de cada serviço",
             color = AboutTextPrimary,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
@@ -226,20 +226,20 @@ private fun ValueCard(value: ValueItem, modifier: Modifier = Modifier) {
 private data class ServiceItem(val title: String, val description: String)
 
 private val serviceItems = listOf(
-    ServiceItem("Residential Maintenance", "Routine diagnostic reviews, appliance tuning, and preventative care regimens."),
-    ServiceItem("Electrical Repairs", "Premium panel upgrades, high-voltage troubleshooting, and intelligent smart home lighting setups."),
-    ServiceItem("Hydraulic Repairs", "Leak diagnostics, premium fixture installations, and modern water system balancing."),
-    ServiceItem("Carpentry Services", "Bespoke furniture repair, trim restoration, and structural wood reinforcement."),
-    ServiceItem("Renovations", "Turnkey design-build projects, drywall restoration, and high-finish paint layers.")
+    ServiceItem("Manutenção residencial", "Revisões de rotina, ajustes em aparelhos e manutenção preventiva."),
+    ServiceItem("Reparos elétricos", "Troca de quadros, solução de falhas elétricas e instalação de iluminação inteligente."),
+    ServiceItem("Reparos hidráulicos", "Busca de vazamentos, instalação de louças e metais e ajuste do sistema de água."),
+    ServiceItem("Marcenaria", "Conserto de móveis, restauração de acabamentos e reforço de estruturas de madeira."),
+    ServiceItem("Reformas", "Projetos completos, reparo de drywall e pintura com acabamento fino.")
 )
 
 @Composable
 fun OurServicesSection() {
     Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-        SectionEyebrow("OUR SERVICES")
+        SectionEyebrow("NOSSOS SERVIÇOS")
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Comprehensive technical support for your home",
+            text = "Suporte técnico completo para a sua casa",
             color = AboutTextPrimary,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
@@ -247,7 +247,7 @@ fun OurServicesSection() {
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Os 4 primeiros em pares (2 colunas); "Renovations" sozinho
+        // Os 4 primeiros em pares (2 colunas); "Reformas" sozinho
         // ocupa a linha inteira — igual ao recorte do Figma.
         serviceItems.dropLast(1).chunked(2).forEach { rowItems ->
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -293,19 +293,19 @@ private fun ServiceCard(service: ServiceItem, modifier: Modifier = Modifier) {
 private data class WorkStep(val number: String, val title: String, val description: String)
 
 private val workSteps = listOf(
-    WorkStep("01", "Professional Registration", "Technicians submit detailed verification documents, reference history, and pass practical exams."),
-    WorkStep("02", "Search for Services", "Homeowners choose specialized service domains and pinpoint their exact repair requirement through our portal."),
-    WorkStep("03", "Simple Hiring", "Our smart algorithmic engine matches and dispatches the highest-rated technician near you."),
-    WorkStep("04", "Reviews & Feedback", "Rate your experience. Feedback drives quality scores and locks in community-driven performance standards.")
+    WorkStep("01", "Cadastro do profissional", "O profissional envia seus dados e documentos para verificação."),
+    WorkStep("02", "Busca de serviços", "O cliente escolhe a categoria e descreve exatamente o que precisa."),
+    WorkStep("03", "Contratação simples", "A TechFix indica os profissionais mais bem avaliados perto de você."),
+    WorkStep("04", "Avaliações", "Avalie o atendimento. As notas ajudam a manter a qualidade dos profissionais.")
 )
 
 @Composable
 fun HowWeWorkSection() {
     Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-        SectionEyebrow("HOW WE WORK")
+        SectionEyebrow("COMO FUNCIONA")
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Four simple steps to absolute home peace of mind",
+            text = "Quatro passos simples para resolver seu problema",
             color = AboutTextPrimary,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
@@ -361,20 +361,20 @@ private fun WorkStepRow(step: WorkStep, isLast: Boolean) {
 private data class TeamMember(val initials: String, val name: String, val role: String, val avatarColor: Color)
 
 private val teamMembers = listOf(
-    TeamMember("RN", "Rafael Nunes", "DIRECTOR OF STRATEGY AND PRODUCT", Color(0xFFB5451B)),
-    TeamMember("MJ", "Miguel Januario", "DIRECTOR OF OPERATIONS", Color(0xFF3B5F45)),
-    TeamMember("LG", "Leonardo Gregório", "FINANCIAL DIRECTOR", Color(0xFF4A3B6B)),
-    TeamMember("GA", "Gabriel Araujo", "MARKETING DIRECTOR", Color(0xFF8A4B1F)),
-    TeamMember("J", "João", "GENERAL COUNSEL", Color(0xFF3A3A3A))
+    TeamMember("RN", "Rafael Nunes", "DIRETOR DE ESTRATÉGIA E PRODUTO", Color(0xFFB5451B)),
+    TeamMember("MJ", "Miguel Januario", "DIRETOR DE OPERAÇÕES", Color(0xFF3B5F45)),
+    TeamMember("LG", "Leonardo Gregório", "DIRETOR FINANCEIRO", Color(0xFF4A3B6B)),
+    TeamMember("GA", "Gabriel Araujo", "DIRETOR DE MARKETING", Color(0xFF8A4B1F)),
+    TeamMember("J", "João", "DIRETOR JURÍDICO", Color(0xFF3A3A3A))
 )
 
 @Composable
 fun OurTeamSection() {
     Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-        SectionEyebrow("OUR TEAM")
+        SectionEyebrow("NOSSA EQUIPE")
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Meet the operational and strategic leaders",
+            text = "Conheça quem faz a TechFix acontecer",
             color = AboutTextPrimary,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
@@ -382,7 +382,7 @@ fun OurTeamSection() {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Our diverse leadership team balances extensive real-world operations experience with high-scale technology execution.",
+            text = "Nossa equipe une experiência prática de atendimento com conhecimento em tecnologia.",
             color = AboutTextSecondary,
             fontSize = 13.sp,
             lineHeight = 18.sp
@@ -450,14 +450,14 @@ fun AboutFooterSection() {
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "A high-performance modern platform dedicated to preserving your physical home infrastructure. Vetted specialists, upfront cost calculators, and diagnostic-driven workflow parameters.",
+            text = "Uma plataforma que conecta você a profissionais verificados, com preço claro e acompanhamento do pedido do início ao fim.",
             color = AboutTextSecondary,
             fontSize = 12.sp,
             lineHeight = 17.sp
         )
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "© 2026 TechFix Inc. Premium Home Engineering Systems.",
+            text = "© 2026 TechFix. Todos os direitos reservados.",
             color = AboutTextSecondary,
             fontSize = 11.sp
         )
@@ -466,7 +466,7 @@ fun AboutFooterSection() {
 
 /**
  * O textinho pequeno e laranja acima de cada título de seção
- * (ex: "OUR VALUES", "HOW WE WORK"). Extraído aqui porque se repete
+ * (ex: "NOSSOS VALORES", "COMO FUNCIONA"). Extraído aqui porque se repete
  * em todas as seções.
  */
 @Composable
