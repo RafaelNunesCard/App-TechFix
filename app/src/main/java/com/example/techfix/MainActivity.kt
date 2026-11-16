@@ -1110,7 +1110,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 onMenuClick = { showMenuDialog = true },
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
                 onRequestServiceClick = { navController.navigate("request_service/0") },
-                onSeeAllHistoryClick = { /* TODO: navegar para histórico completo */ },
+                onSeeAllHistoryClick = { navController.navigateToTab(Routes.ORDERS, homeRoute()) },
                 onLogoutClick = { performLogout() }
             )
         }
