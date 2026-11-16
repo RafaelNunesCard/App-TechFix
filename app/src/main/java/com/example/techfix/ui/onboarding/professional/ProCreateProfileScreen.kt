@@ -41,6 +41,7 @@ fun ProCreateProfileScreen(
     onBack: () -> Unit,
     onContinue: (ProProfileInfo) -> Unit,
     onUploadPhoto: () -> Unit = {},
+    photoUri: String? = null,
     onAddPortfolioItem: () -> Unit = {}
 ) {
     var fullName by remember { mutableStateOf("") }
@@ -84,16 +85,25 @@ fun ProCreateProfileScreen(
                                 .border(BorderStroke(1.dp, CardBorderIdle), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.CameraAlt,
-                                contentDescription = null,
-                                tint = AccentEnd,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            if (photoUri != null) {
+                                coil.compose.AsyncImage(
+                                    model = photoUri,
+                                    contentDescription = "Foto de perfil",
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Outlined.CameraAlt,
+                                    contentDescription = null,
+                                    tint = AccentEnd,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(text = "Enviar foto de perfil", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text(text = if (photoUri != null) "Trocar foto de perfil" else "Enviar foto de perfil", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                             Text(text = "JPG ou PNG, até 5 MB.", color = TextLabel, fontSize = 11.sp)
                         }
                     }
