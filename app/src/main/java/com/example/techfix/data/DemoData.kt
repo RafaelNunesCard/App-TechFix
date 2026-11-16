@@ -98,6 +98,18 @@ object DemoData {
             )
         }
 
+        // ---- Mais profissionais para o Explorar ficar com cara de app de verdade ----
+        if (proDao.count() < 5) {
+            proDao.insertAll(
+                listOf(
+                    ProfessionalEntity("5", null, "Marcos Oliveira", "Técnico em TI", 4.6, 58, 4.5, true),
+                    ProfessionalEntity("6", null, "Paula Nogueira", "Técnica em Celulares", 4.7, 83, 1.9, true),
+                    ProfessionalEntity("7", null, "Henrique Dias", "Eletricista", 4.5, 41, 5.2, false),
+                    ProfessionalEntity("8", null, "Fernanda Rocha", "Redes e Wi-Fi", 4.8, 67, 2.7, true)
+                )
+            )
+        }
+
         // ---- Pedidos da cliente demo ----
         val orderDao = db.serviceOrderDao()
         if (orderDao.countByClient(CLIENT_EMAIL) == 0) {
