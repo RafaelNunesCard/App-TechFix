@@ -48,23 +48,23 @@ data class Produto(
     val fotoRes: Int
 )
 
-val categorias = listOf("Appliance", "Vehicle", "Industrial")
+val categorias = listOf("Eletrodomésticos", "Veículos", "Industrial")
 
 val produtos = listOf(
-    Produto("Renata Costa", "Appliance", 4.6, "$38", R.drawable.placeholder_perfil),
-    Produto("Fábio Nunes", "Appliance", 4.8, "$52", R.drawable.placeholder_perfil),
-    Produto("Juliana Ramos", "Appliance", 4.7, "$40", R.drawable.placeholder_perfil),
-    Produto("Diego Moreira", "Appliance", 4.5, "$35", R.drawable.placeholder_perfil),
-    Produto("Patrícia Lima", "Appliance", 4.9, "$60", R.drawable.placeholder_perfil),
-    Produto("Rafael Teixeira", "Appliance", 4.4, "$30", R.drawable.placeholder_perfil),
+    Produto("Renata Costa", "Eletrodomésticos", 4.6, "$38", R.drawable.placeholder_perfil),
+    Produto("Fábio Nunes", "Eletrodomésticos", 4.8, "$52", R.drawable.placeholder_perfil),
+    Produto("Juliana Ramos", "Eletrodomésticos", 4.7, "$40", R.drawable.placeholder_perfil),
+    Produto("Diego Moreira", "Eletrodomésticos", 4.5, "$35", R.drawable.placeholder_perfil),
+    Produto("Patrícia Lima", "Eletrodomésticos", 4.9, "$60", R.drawable.placeholder_perfil),
+    Produto("Rafael Teixeira", "Eletrodomésticos", 4.4, "$30", R.drawable.placeholder_perfil),
 
     // ---------- VEHICLE ----------
-    Produto("Bruno Cardoso", "Vehicle", 4.6, "$95", R.drawable.placeholder_perfil),
-    Produto("Camila Duarte", "Vehicle", 4.9, "$150", R.drawable.placeholder_perfil),
-    Produto("Eduardo Farias", "Vehicle", 4.7, "$110", R.drawable.placeholder_perfil),
-    Produto("Larissa Pinto", "Vehicle", 4.5, "$85", R.drawable.placeholder_perfil),
-    Produto("Thiago Azevedo", "Vehicle", 4.8, "$130", R.drawable.placeholder_perfil),
-    Produto("Vanessa Rocha", "Vehicle", 4.6, "$99", R.drawable.placeholder_perfil),
+    Produto("Bruno Cardoso", "Veículos", 4.6, "$95", R.drawable.placeholder_perfil),
+    Produto("Camila Duarte", "Veículos", 4.9, "$150", R.drawable.placeholder_perfil),
+    Produto("Eduardo Farias", "Veículos", 4.7, "$110", R.drawable.placeholder_perfil),
+    Produto("Larissa Pinto", "Veículos", 4.5, "$85", R.drawable.placeholder_perfil),
+    Produto("Thiago Azevedo", "Veículos", 4.8, "$130", R.drawable.placeholder_perfil),
+    Produto("Vanessa Rocha", "Veículos", 4.6, "$99", R.drawable.placeholder_perfil),
 
     // ---------- INDUSTRIAL ----------
     Produto("Simone Barros", "Industrial", 4.9, "$280", R.drawable.placeholder_perfil),
@@ -72,8 +72,8 @@ val produtos = listOf(
     Produto("Beatriz Monteiro", "Industrial", 4.8, "$240", R.drawable.placeholder_perfil),
     Produto("Gustavo Peixoto", "Industrial", 4.6, "$195", R.drawable.placeholder_perfil),
     Produto("Isabela Correia", "Industrial", 4.7, "$220", R.drawable.placeholder_perfil),
-    Produto("João Silva", "Appliance", 4.9, "$45", R.drawable.eletricista_joao),
-    Produto("Marina Souza", "Vehicle", 4.8, "$120", R.drawable.marina_mecanica),
+    Produto("João Silva", "Eletrodomésticos", 4.9, "$45", R.drawable.eletricista_joao),
+    Produto("Marina Souza", "Veículos", 4.8, "$120", R.drawable.marina_mecanica),
     Produto("Carlos Andrade", "Industrial", 4.7, "$210", R.drawable.carlos_industrial)
 )
 
@@ -84,7 +84,7 @@ fun ProdutoScreen(
     onNavItemSelected: (ProdutoNavItem) -> Unit = {}
 ) {
     var searchText by remember { mutableStateOf("") }
-    var categoriaSelecionada by remember { mutableStateOf("Appliance") }
+    var categoriaSelecionada by remember { mutableStateOf("Eletrodomésticos") }
     var selectedNavItem by remember { mutableStateOf(ProdutoNavItem.EXPLORE) }
 
     val produtosFiltrados = produtos.filter { produto ->
@@ -138,7 +138,7 @@ fun ProdutoScreen(
                     .padding(horizontal = 20.dp)
             ) {
                 Text(
-                    text = "Hello, Welcome back 👋",
+                    text = "Olá, bem-vindo de volta 👋",
                     color = Color(0xFFA1A1AA),
                     fontSize = 13.sp
                 )
@@ -146,7 +146,7 @@ fun ProdutoScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "What needs fixing today?",
+                    text = "O que precisa de conserto hoje?",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.sp
@@ -179,7 +179,7 @@ fun ProdutoScreen(
                         decorationBox = { innerTextField ->
                             if (searchText.isEmpty()) {
                                 Text(
-                                    text = "Search repairs, systems, painting...",
+                                    text = "Buscar reparos, sistemas, pintura...",
                                     color = Color(0xFF71717A),
                                     fontSize = 13.sp
                                 )
@@ -210,8 +210,8 @@ fun ProdutoScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Categories", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text("See All", color = LaranjaTechFix, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text("Categorias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text("Ver tudo", color = LaranjaTechFix, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -256,8 +256,8 @@ fun ProdutoScreen(
                         .padding(end = 20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Featured Services", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text("Trending", color = LaranjaTechFix, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text("Serviços em destaque", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text("Em alta", color = LaranjaTechFix, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -286,7 +286,7 @@ fun ProdutoScreen(
                         .background(Color(0xFF18181B))
                         .padding(vertical = 16.dp)
                 ) {
-                    EstatisticaItem("3 Years", "EXPERIENCE", Modifier.weight(1f))
+                    EstatisticaItem("3 anos", "EXPERIÊNCIA", Modifier.weight(1f))
                     Divider(
                         color = Color.White.copy(alpha = 0.1f),
                         modifier = Modifier.fillMaxHeight().width(1.dp)
@@ -373,7 +373,7 @@ fun ProdutoCard(produto: Produto) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Column {
-                Text("STARTING AT", color = Color(0xFF71717A), fontSize = 9.sp)
+                Text("A PARTIR DE", color = Color(0xFF71717A), fontSize = 9.sp)
                 Text(produto.preco, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
