@@ -1,21 +1,20 @@
 package com.example.techfix.ui.auth
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Public
-import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,10 +33,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import com.example.techfix.R
 
 // ---- Design tokens (same palette as the onboarding flow, kept local to this package) ----
-private val ScreenBackground = Color(0xFF121212)
+private val ScreenBackground = Color(0xFF0D0C10)
 private val FieldBackground = Color(0xFF1C1C1E)
 private val FieldBorderIdle = Color(0xFF2C2C2E)
 private val AccentStart = Color(0xFFFF8A3D) // orange
@@ -63,7 +64,12 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
 
     Surface(modifier = Modifier.fillMaxSize(), color = ScreenBackground) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+        ) {
 
             AuthGradientHeader(
                 title = "Bem-vindo de volta!",
@@ -72,8 +78,10 @@ fun LoginScreen(
 
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(horizontal = 24.dp)
+                    .navigationBarsPadding()
+                    .padding(bottom = 24.dp)
             ) {
                 Spacer(modifier = Modifier.height(28.dp))
 
@@ -143,22 +151,25 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    // NOTE: swap these generic icons for the real brand assets
-                    // (X/Twitter, Facebook, Apple) — Material Icons has no
-                    // trademarked logos, so placeholders are used here.
-                    SocialIconButton(
-                        icon = Icons.Outlined.Public,
-                        onClick = { onSocialLogin(SocialProvider.X) }
+                    SocialLogoButton(
+                        drawableName = "ic_google",
+                        fallbackText = "G",
+                        description = "Entrar com Google",
+                        onClick = { onSocialLogin(SocialProvider.GOOGLE) }
                     )
                     Spacer(modifier = Modifier.width(16.dp))
-                    SocialIconButton(
-                        icon = Icons.Outlined.Language,
+                    SocialLogoButton(
+                        drawableName = "ic_facebook",
+                        fallbackText = "f",
+                        description = "Entrar com Facebook",
                         onClick = { onSocialLogin(SocialProvider.FACEBOOK) }
                     )
                     Spacer(modifier = Modifier.width(16.dp))
-                    SocialIconButton(
-                        icon = Icons.Outlined.Star,
-                        onClick = { onSocialLogin(SocialProvider.APPLE) }
+                    SocialLogoButton(
+                        drawableName = "ic_linkedin",
+                        fallbackText = "in",
+                        description = "Entrar com LinkedIn",
+                        onClick = { onSocialLogin(SocialProvider.LINKEDIN) }
                     )
                 }
 
@@ -186,7 +197,7 @@ fun LoginScreen(
     }
 }
 
-enum class SocialProvider { X, FACEBOOK, APPLE }
+enum class SocialProvider { GOOGLE, FACEBOOK, LINKEDIN }
 
 // =========================================================================================
 // SIGN UP SCREEN (step 1 of N — basic info)
@@ -209,7 +220,12 @@ fun SignUpBasicInfoScreen(
         password.isNotBlank() && confirmPassword == password
 
     Surface(modifier = Modifier.fillMaxSize(), color = ScreenBackground) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+        ) {
 
             AuthGradientHeader(
                 title = "Crie sua Conta",
@@ -218,8 +234,10 @@ fun SignUpBasicInfoScreen(
 
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(horizontal = 24.dp)
+                    .navigationBarsPadding()
+                    .padding(bottom = 24.dp)
             ) {
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -338,27 +356,20 @@ private fun AuthGradientHeader(title: String, subtitle: String) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
             .background(AccentGradient)
-            .padding(horizontal = 24.dp, vertical = 28.dp)
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo_techfix),
-                    contentDescription = "TechFix",
-                    modifier = Modifier
-                    .height(28.dp)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Image(
+                painter = painterResource(id = R.drawable.logo_techfix),
+                contentDescription = "TechFix",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .height(32.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    )
-                Text(
-                    text = "Fix",
-                    color = Color.White.copy(alpha = 0.75f),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                    )
-                }
-            }
+            )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = title,
@@ -375,6 +386,7 @@ private fun AuthGradientHeader(title: String, subtitle: String) {
             )
         }
     }
+}
 
 @Composable
 private fun SignUpStepProgressBar(totalSteps: Int, currentStep: Int) {
@@ -418,6 +430,7 @@ private fun AuthTextField(
         Spacer(modifier = Modifier.height(8.dp))
 
         val borderColor = if (isError) AccentEnd else FieldBorderIdle
+        var passwordVisible by remember { mutableStateOf(false) }
 
         OutlinedTextField(
             value = value,
@@ -429,10 +442,20 @@ private fun AuthTextField(
                 Text(text = placeholder, color = TextSecondary.copy(alpha = 0.6f), fontSize = 14.sp)
             },
             trailingIcon = {
-                Icon(imageVector = trailingIcon, contentDescription = null, tint = TextSecondary)
+                if (isPassword) {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                            contentDescription = if (passwordVisible) "Esconder senha" else "Mostrar senha",
+                            tint = TextSecondary
+                        )
+                    }
+                } else {
+                    Icon(imageVector = trailingIcon, contentDescription = null, tint = TextSecondary)
+                }
             },
             singleLine = true,
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+            visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = KeyboardOptions(
                 keyboardType = if (isPassword) KeyboardType.Password else keyboardType
             ),
@@ -514,18 +537,46 @@ private fun DividerWithLabel(text: String) {
     }
 }
 
+/**
+ * Botão redondo com o logo oficial. O arquivo do logo (ic_google.png etc.)
+ * precisa estar em res/drawable; se não estiver, mostra uma letra no lugar
+ * e o app continua funcionando normalmente.
+ */
 @Composable
-private fun SocialIconButton(icon: ImageVector, onClick: () -> Unit) {
+private fun SocialLogoButton(
+    drawableName: String,
+    fallbackText: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val resId = remember(drawableName) {
+        context.resources.getIdentifier(drawableName, "drawable", context.packageName)
+    }
+
     Box(
         modifier = Modifier
-            .size(48.dp)
+            .size(52.dp)
             .clip(CircleShape)
-            .background(FieldBackground)
-            .border(BorderStroke(1.dp, FieldBorderIdle), CircleShape)
+            .background(Color.White)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = TextPrimary, modifier = Modifier.size(20.dp))
+        if (resId != 0) {
+            Image(
+                painter = painterResource(id = resId),
+                contentDescription = description,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(26.dp)
+            )
+        } else {
+            Text(
+                text = fallbackText,
+                color = Color(0xFF1C1C1E),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
