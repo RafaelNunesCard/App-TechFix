@@ -50,7 +50,7 @@ fun ProProfileReadyScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Your profile is ready!",
+                text = "Seu perfil está pronto!",
                 color = TextPrimary,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
@@ -59,7 +59,7 @@ fun ProProfileReadyScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Verified clients can now search and book your tech services immediately. Check your profile preview card:",
+                text = "Os clientes já podem encontrar e contratar seus serviços. Confira a prévia do seu perfil:",
                 color = TextSecondary,
                 fontSize = 13.sp,
                 lineHeight = 18.sp,
@@ -90,11 +90,11 @@ fun ProProfileReadyScreen(
                     border = BorderStroke(1.dp, CardBorderIdle)
                 ) {
                     Box(modifier = Modifier.padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
-                        Text(text = "Edit Info", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                        Text(text = "Editar dados", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     }
                 }
                 ProPrimaryButton(
-                    text = "PUBLISH MY PROFILE",
+                    text = "PUBLICAR MEU PERFIL",
                     showArrow = false,
                     modifier = Modifier.weight(1f),
                     onClick = onPublish
@@ -161,19 +161,19 @@ private fun ProfilePreviewCard(
                 Column {
                     Text(text = fullName, color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(text = "5.0 • Verified Professional", color = AccentEnd, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text(text = "Novo na TechFix", color = AccentEnd, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(text = "ABOUT / BIO", color = TextLabel, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.5.sp)
+            Text(text = "SOBRE / BIOGRAFIA", color = TextLabel, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.5.sp)
             Spacer(modifier = Modifier.height(6.dp))
             Text(text = bio, color = TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(text = "SPECIALTIES OFFERED", color = TextLabel, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.5.sp)
+            Text(text = "ESPECIALIDADES", color = TextLabel, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.5.sp)
             Spacer(modifier = Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 specialties.forEach { specialty ->
@@ -193,7 +193,7 @@ private fun ProfilePreviewCard(
             Row {
                 Icon(imageVector = Icons.Outlined.LocationOn, contentDescription = null, tint = AccentEnd, modifier = Modifier.size(15.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "Within $serviceRadiusKm km", color = TextSecondary, fontSize = 12.sp)
+                Text(text = "Em até $serviceRadiusKm km", color = TextSecondary, fontSize = 12.sp)
                 Spacer(modifier = Modifier.width(16.dp))
                 Icon(imageVector = Icons.Outlined.CalendarToday, contentDescription = null, tint = AccentEnd, modifier = Modifier.size(13.dp))
                 Spacer(modifier = Modifier.width(6.dp))
@@ -210,9 +210,9 @@ private fun ProProfileReadyScreenPreview() {
         ProProfileReadyScreen(
             fullName = "Carlos Eduardo",
             bio = "Especialista certificado em consertos de computadores de mesa, laptops corporativos e celulares.",
-            specialties = listOf("Computer Repair", "Phone Repair", "Wiring"),
+            specialties = listOf("Reparo de computadores", "Reparo de celular", "Elétrica"),
             serviceRadiusKm = 15,
-            availabilityLabel = "Mon-Fri Availability",
+            availabilityLabel = "Seg-Sex disponível",
             onEditInfo = {},
             onPublish = {}
         )
