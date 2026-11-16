@@ -992,7 +992,12 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
 
         // ---------------- Barra inferior da Home ----------------
         composable(Routes.EXPLORE) {
+            val explorePros by remember { database.professionalDao().observeAll() }
+                .collectAsState(initial = emptyList())
+
             ProdutoScreen(
+                professionals = explorePros.map { it.toUi() },
+                onProfessionalClick = { id -> navController.navigate("request_service/$id") },
                 onNavItemSelected = { item ->
                     when (item) {
                         ProdutoNavItem.HOME -> navController.navigateToTab(homeRoute(), homeRoute())
