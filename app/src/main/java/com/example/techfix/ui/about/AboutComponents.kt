@@ -56,12 +56,12 @@ private const val LabelRadiusDp = 92
 data class AboutSectionInfo(val id: String, val shortLabel: String)
 
 val aboutSections = listOf(
-    AboutSectionInfo("company", "Our Company"),
-    AboutSectionInfo("why_us", "Why Us"),
-    AboutSectionInfo("values", "Our Values"),
-    AboutSectionInfo("services", "Services"),
-    AboutSectionInfo("how_we_work", "How We Work"),
-    AboutSectionInfo("team", "Our Team")
+    AboutSectionInfo("company", "Nossa empresa"),
+    AboutSectionInfo("why_us", "Por que nós"),
+    AboutSectionInfo("values", "Valores"),
+    AboutSectionInfo("services", "Serviços"),
+    AboutSectionInfo("how_we_work", "Como funciona"),
+    AboutSectionInfo("team", "Equipe")
 )
 
 /**
@@ -173,7 +173,7 @@ fun CircularNavWheel(
             // "ACTIVE 0X/06", um pouco acima do botão de olho, dentro
             // do buraco vazio do anel.
             Text(
-                text = "ACTIVE ${(selectedIndex + 1).toString().padStart(2, '0')}/" +
+                text = "SEÇÃO ${(selectedIndex + 1).toString().padStart(2, '0')}/" +
                     sections.size.toString().padStart(2, '0'),
                 color = AboutAccentOrange,
                 fontSize = 11.sp,
