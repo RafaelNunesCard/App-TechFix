@@ -58,11 +58,11 @@ data class Professional(
 )
 
 private val homeCategories = listOf(
-    HomeCategory("computers", "Computers", Icons.Outlined.Computer),
-    HomeCategory("phones", "Phones", Icons.Outlined.Smartphone),
-    HomeCategory("electrical", "Electrical", Icons.Outlined.Bolt),
-    HomeCategory("plumbing", "Plumbing", Icons.Outlined.Plumbing),
-    HomeCategory("painting", "Painting", Icons.Outlined.FormatPaint)
+    HomeCategory("computers", "Computadores", Icons.Outlined.Computer),
+    HomeCategory("phones", "Celulares", Icons.Outlined.Smartphone),
+    HomeCategory("electrical", "Elétrica", Icons.Outlined.Bolt),
+    HomeCategory("plumbing", "Hidráulica", Icons.Outlined.Plumbing),
+    HomeCategory("painting", "Pintura", Icons.Outlined.FormatPaint)
 )
 
 // =========================================================================================
