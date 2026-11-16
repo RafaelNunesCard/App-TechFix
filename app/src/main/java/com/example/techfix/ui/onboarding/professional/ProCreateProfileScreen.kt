@@ -1,5 +1,7 @@
 package com.example.techfix.ui.onboarding.professional
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -69,7 +71,7 @@ fun ProCreateProfileScreen(
                 shape = RoundedCornerShape(18.dp),
                 border = BorderStroke(1.dp, CardBorderIdle)
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(18.dp)) {
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
