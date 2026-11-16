@@ -360,17 +360,6 @@ private fun AuthGradientHeader(title: String, subtitle: String) {
             .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_techfix),
-                contentDescription = "TechFix",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .height(32.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             Text(
                 text = title,
                 color = Color.White,
@@ -567,7 +556,7 @@ private fun SocialLogoButton(
                 painter = painterResource(id = resId),
                 contentDescription = description,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.size(26.dp)
+                modifier = Modifier.size(36.dp)
             )
         } else {
             Text(
