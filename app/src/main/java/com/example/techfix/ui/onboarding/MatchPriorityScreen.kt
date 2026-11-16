@@ -44,26 +44,26 @@ data class MatchPriority(
 private val allPriorities = listOf(
     MatchPriority(
         id = "fastest_response",
-        title = "Fastest Response",
-        description = "Prioritize specialists with immediate availabilities.",
+        title = "Resposta mais rápida",
+        description = "Priorize especialistas com disponibilidade imediata.",
         icon = Icons.Outlined.Bolt
     ),
     MatchPriority(
         id = "best_price",
-        title = "Best Price Match",
-        description = "Sort options based on competitive pricing and offers.",
+        title = "Melhor preço",
+        description = "Ordene as opções por preços e ofertas competitivas.",
         icon = Icons.Outlined.Sell
     ),
     MatchPriority(
         id = "highest_rated",
-        title = "Highest Rated",
-        description = "Filter strictly by certified professionals with 4.8+ ratings.",
+        title = "Mais bem avaliados",
+        description = "Veja só profissionais com nota 4,8 ou mais.",
         icon = Icons.Outlined.WorkspacePremium
     ),
     MatchPriority(
         id = "nearest_distance",
-        title = "Nearest Distance",
-        description = "Discover physical proximity helpers located nearby.",
+        title = "Mais perto de você",
+        description = "Encontre profissionais que estão por perto.",
         icon = Icons.Outlined.LocationOn
     )
 )
@@ -98,7 +98,7 @@ fun MatchPriorityScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "STEP $currentStep OF $totalSteps",
+                text = "PASSO $currentStep DE $totalSteps",
                 color = AccentEnd,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -108,7 +108,7 @@ fun MatchPriorityScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "How do you prefer to find help?",
+                text = "Como você prefere encontrar ajuda?",
                 color = TextPrimary,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
@@ -118,7 +118,7 @@ fun MatchPriorityScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Tell us your priority algorithm so we can sort and match the best fit for your specific lifestyle.",
+                text = "Conte o que é mais importante para você e vamos ordenar os profissionais do seu jeito.",
                 color = TextSecondary,
                 fontSize = 13.sp,
                 lineHeight = 18.sp
@@ -297,7 +297,7 @@ private fun BackButton(onClick: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Back",
+                text = "Voltar",
                 color = TextPrimary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium
@@ -335,7 +335,7 @@ private fun ContinueButton(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Continue",
+                text = "Continuar",
                 color = Color.White,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold
