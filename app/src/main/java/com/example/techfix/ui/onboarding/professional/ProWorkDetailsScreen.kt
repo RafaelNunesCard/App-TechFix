@@ -19,8 +19,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val experienceOptions = listOf("1-2 years", "3-5 years", "5-10 years", "10+ years")
-private val weekDays = listOf("M", "T", "W", "T", "F", "S", "S")
+private val experienceOptions = listOf("1-2 anos", "3-5 anos", "5-10 anos", "10+ anos")
+private val weekDays = listOf("S", "T", "Q", "Q", "S", "S", "D")
 private val weekDayIds = listOf("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 data class ProWorkDetails(
@@ -40,7 +40,7 @@ fun ProWorkDetailsScreen(
     onBack: () -> Unit,
     onContinue: (ProWorkDetails) -> Unit
 ) {
-    var experienceLevel by remember { mutableStateOf("3-5 years") }
+    var experienceLevel by remember { mutableStateOf("3-5 anos") }
     var radiusKm by remember { mutableStateOf(15f) }
     var availableDays by remember { mutableStateOf(setOf("mon", "tue", "wed", "thu", "fri")) }
 
@@ -52,13 +52,13 @@ fun ProWorkDetailsScreen(
             ProStepHeader(
                 step = currentStep,
                 totalSteps = totalSteps,
-                title = "Tell us about your work",
-                subtitle = "Set your typical experience, working radius, and the days you are available to receive client orders."
+                title = "Fale sobre o seu trabalho",
+                subtitle = "Informe sua experiência, o raio de atendimento e os dias em que você recebe pedidos."
             )
             Spacer(modifier = Modifier.height(20.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                SectionCard(title = "Experience Level") {
+                SectionCard(title = "Nível de experiência") {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         experienceOptions.forEach { option ->
                             ExperiencePill(
@@ -72,12 +72,12 @@ fun ProWorkDetailsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SectionCard(title = "Service Area Radius") {
+                SectionCard(title = "Raio de atendimento") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "Maximum travel distance", color = TextSecondary, fontSize = 12.sp)
+                        Text(text = "Distância máxima de deslocamento", color = TextSecondary, fontSize = 12.sp)
                         Text(
                             text = "${radiusKm.toInt()} km",
                             color = AccentEnd,
@@ -99,7 +99,7 @@ fun ProWorkDetailsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SectionCard(title = "Weekly Availability") {
+                SectionCard(title = "Disponibilidade semanal") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -127,7 +127,7 @@ fun ProWorkDetailsScreen(
             ProBottomNavBar {
                 ProBackButton(onClick = onBack)
                 ProPrimaryButton(
-                    text = "Continue",
+                    text = "Continuar",
                     modifier = Modifier.weight(1f),
                     onClick = {
                         onContinue(ProWorkDetails(experienceLevel, radiusKm.toInt(), availableDays))
