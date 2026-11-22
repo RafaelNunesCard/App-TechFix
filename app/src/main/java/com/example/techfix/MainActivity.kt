@@ -49,6 +49,8 @@ import com.example.techfix.data.UserSession
 import com.example.techfix.data.local.ChatMessageEntity
 import com.example.techfix.data.local.IncomingMessage
 import com.example.techfix.data.local.ProfessionalEntity
+import com.example.techfix.data.local.applyTo
+import com.example.techfix.data.local.toDetails
 import com.example.techfix.data.local.ReceivedOrder
 import com.example.techfix.data.local.ServiceOrderEntity
 import com.example.techfix.data.local.TechFixDatabase
@@ -495,8 +497,13 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                             // Tem perfil profissional salvo? Então entra como profissional.
                             val proProfile = database.professionalProfileDao().getByEmail(state.email)
                             isProfessional = proProfile != null
-                            if (proProfile != null) {
+                                                        if (proProfile != null) {
                                 userProfile = userProfile.copy(bio = proProfile.bio)
+                            }
+
+                            database.profileDetailsDao().getByEmail(state.email)?.let { details ->
+                                userProfile = details.applyTo(userProfile)
+                                loggedInFullName = userProfile.name
                             }
 
                             navController.navigate(if (proProfile != null) Routes.PRO_HOME else Routes.HOME) {
@@ -1142,8 +1149,13 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 initialProfile = userProfile.copy(avatarUrl = editPhoto ?: ""),
                 onBackClick = { navController.popBackStack() },
                 onCancel = { navController.popBackStack() },
-                onSave = { updatedProfile ->
+                                onSave = { updatedProfile ->
                     userProfile = updatedProfile
+                    loggedInFullName = updatedProfile.name
+                    coroutineScope.launch {
+                        database.profileDetailsDao().upsert(updatedProfile.toDetails(loggedInEmail))
+                    }
+                    Toast.makeText(context, "Perfil atualizado!", Toast.LENGTH_SHORT).show()
                     navController.popBackStack()
                 },
                 onChangePhotoClick = {
