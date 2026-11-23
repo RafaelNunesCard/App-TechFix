@@ -66,6 +66,7 @@ import com.example.techfix.ui.auth.ForgotPasswordScreen
 import com.example.techfix.ui.auth.LoginScreen
 import com.example.techfix.ui.auth.SignUpBasicInfoScreen
 import com.example.techfix.ui.home.HomeNavItem
+import com.example.techfix.ui.home.HomeBottomNav
 import com.example.techfix.ui.chat.ChatBubble
 import com.example.techfix.ui.chat.ChatScreen
 import com.example.techfix.ui.home.HomeScreen
@@ -1118,6 +1119,21 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                         .filter { it.status != OrderStatus.CANCELED }
                         .map { it.toHistoryItem() }
                 ),
+
+                                isProfessional = isProfessional,
+                bottomBar = {
+                    HomeBottomNav(
+                        selected = HomeNavItem.PROFILE,
+                        onItemSelected = { item ->
+                            when (item) {
+                                HomeNavItem.HOME -> navController.navigateToTab(homeRoute(), homeRoute())
+                                HomeNavItem.EXPLORE -> navController.navigateToTab(Routes.EXPLORE, homeRoute())
+                                HomeNavItem.ORDERS -> navController.navigateToTab(Routes.ORDERS, homeRoute())
+                                HomeNavItem.PROFILE -> Unit
+                            }
+                        }
+                    )
+                },
                 onMenuClick = { showMenuDialog = true },
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
                 onRequestServiceClick = { navController.navigate("request_service/0") },
