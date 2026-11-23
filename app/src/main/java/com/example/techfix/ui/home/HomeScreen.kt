@@ -385,7 +385,7 @@ private fun AvailabilityBadge(available: Boolean) {
 }
 
 @Composable
-private fun HomeBottomNav(
+ fun HomeBottomNav(
     selected: HomeNavItem,
     onItemSelected: (HomeNavItem) -> Unit
 ) {

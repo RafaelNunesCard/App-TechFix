@@ -1,227 +1,305 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+
 package com.example.techfix.ui.profile
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.automirrored.filled.Logout
-import coil.compose.AsyncImage
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import com.example.techfix.R
-import com.example.techfix.model.SampleData
+import com.example.techfix.model.ProfileOptions
+import com.example.techfix.model.TechFixInfo
 import com.example.techfix.model.UserProfile
-import com.example.techfix.ui.components.*
-import com.example.techfix.ui.theme.*
+import com.example.techfix.ui.components.EmptyState
+import com.example.techfix.ui.components.InterestChip
+import com.example.techfix.ui.components.PreferenceRow
+import com.example.techfix.ui.components.ProfileAvatar
+import com.example.techfix.ui.components.SectionHeader
+import com.example.techfix.ui.components.ServiceHistoryCard
+import com.example.techfix.ui.components.StatPill
+import com.example.techfix.ui.components.TechFixCard
+import com.example.techfix.ui.components.TechFixPrimaryButton
+import com.example.techfix.ui.components.TechFixProgressBar
+import com.example.techfix.ui.components.TechFixSecondaryButton
+import com.example.techfix.ui.components.TechFixWordmark
+import com.example.techfix.ui.theme.TechFixAccentBrush
+import com.example.techfix.ui.theme.TechFixAccentSolid
+import com.example.techfix.ui.theme.TechFixBackground
+import com.example.techfix.ui.theme.TechFixDimens
+import com.example.techfix.ui.theme.TechFixGreen
+import com.example.techfix.ui.theme.TechFixGreenBg
+import com.example.techfix.ui.theme.TechFixPillShape
+import com.example.techfix.ui.theme.TechFixRed
+import com.example.techfix.ui.theme.TechFixSurfaceVariant
+import com.example.techfix.ui.theme.TechFixTextPrimary
+import com.example.techfix.ui.theme.TechFixTextSecondary
+import com.example.techfix.ui.theme.TechFixTextTertiary
+import com.example.techfix.ui.theme.TechFixWarning
+import java.util.Locale
 
 /**
- * Tela de Perfil do Cliente (mobile-customer-profile), replicando o protótipo Figma
- * "IBM - TechFix". Recebe callbacks para as ações principais, deixando a tela "burra"
- * (sem lógica de navegação/negócio embutida).
+ * Tela de Perfil (aba "Perfil"). É "burra": recebe o perfil pronto e só avisa dos cliques.
+ * O tema (TechFixTheme) vem da MainActivity.
+ *
+ * Parâmetros novos (todos opcionais, o MainActivity antigo continua compilando):
+ * - [onOpenDbViewer]: 5 toques seguidos na logo abrem o visualizador do banco (demonstração).
+ * - [isProfessional]: conta de profissional não vê o que é só de cliente
+ *   (Solicitar Serviço, categorias, preferências e fidelidade).
+ * - [bottomBar]: barra inferior (Início / Explorar / Pedidos / Perfil) passada pelo MainActivity.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    profile: UserProfile = SampleData.carlosProfile,
+    profile: UserProfile,
     onMenuClick: () -> Unit = {},
     onEditProfileClick: () -> Unit = {},
     onRequestServiceClick: () -> Unit = {},
     onSeeAllHistoryClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onOpenDbViewer: () -> Unit = {},
+    isProfessional: Boolean = false,
+    bottomBar: @Composable () -> Unit = {},
 ) {
     // Toque 5x seguidos na logo abre a tela do banco de dados (para a demonstração).
-    val logoTaps = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0) }
-    val lastTapAt = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0L) }
+    var logoTaps by remember { mutableStateOf(0) }
+    var lastTapAt by remember { mutableStateOf(0L) }
+    val logoInteraction = remember { MutableInteractionSource() }
+    val onLogoClick: () -> Unit = {
+        val now = System.currentTimeMillis()
+        logoTaps = if (now - lastTapAt < ProfileOptions.DB_VIEWER_TAP_WINDOW_MS) logoTaps + 1 else 1
+        lastTapAt = now
+        if (logoTaps >= ProfileOptions.DB_VIEWER_TAPS) {
+            logoTaps = 0
+            onOpenDbViewer()
+        }
+    }
+
     Scaffold(
         containerColor = TechFixBackground,
         topBar = {
-            TechFixTopBar(
-                onMenuClick = onMenuClick,
-                onLogoClick = {
-                    val now = System.currentTimeMillis()
-                    logoTaps.value = if (now - lastTapAt.value < 800) logoTaps.value + 1 else 1
-                    lastTapAt.value = now
-                    if (logoTaps.value >= 5) {
-                        logoTaps.value = 0
-                        onOpenDbViewer()
+            TopAppBar(
+                title = {
+                    TechFixWordmark(
+                        modifier = Modifier.clickable(
+                            interactionSource = logoInteraction,
+                            indication = null,
+                            onClick = onLogoClick
+                        )
+                    )
+                },
+                actions = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(
+                            Icons.Filled.Menu,
+                            contentDescription = "Menu",
+                            tint = TechFixTextPrimary
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = TechFixBackground,
+                    scrolledContainerColor = TechFixBackground
+                )
             )
-        }
-    ) { paddingValues ->
+        },
+        bottomBar = bottomBar
+    ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+                .padding(padding),
+            contentPadding = PaddingValues(
+                start = TechFixDimens.Space16,
+                end = TechFixDimens.Space16,
+                top = TechFixDimens.Space8,
+                bottom = TechFixDimens.Space24
+            ),
+            verticalArrangement = Arrangement.spacedBy(TechFixDimens.Space16)
         ) {
-            item { Spacer(Modifier.height(4.dp)) }
-
-            item {
+            item(key = "header") {
                 ProfileHeaderCard(
                     profile = profile,
+                    isProfessional = isProfessional,
                     onEditProfileClick = onEditProfileClick,
                     onRequestServiceClick = onRequestServiceClick
                 )
             }
 
-            item { StatsRow(profile = profile) }
+            item(key = "stats") { StatsRow(profile) }
 
-            item {
+            item(key = "about") {
                 TechFixCard {
-                    Text("Sobre Mim", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    Text(profile.bio, style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.7f))
+                    SectionHeader(
+                        title = "Sobre Mim",
+                        actionLabel = if (profile.bio.isBlank()) "Adicionar" else "Editar",
+                        onAction = onEditProfileClick
+                    )
+                    Spacer(Modifier.height(TechFixDimens.Space8))
+                    if (profile.bio.isBlank()) {
+                        Text(
+                            "Conte um pouco sobre você e o que espera dos atendimentos.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TechFixTextTertiary
+                        )
+                    } else {
+                        Text(profile.bio, style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
             }
 
-            item {
-                TechFixCard {
-                    Text("Categorias de Interesse", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(12.dp))
-                    FlowRowChips(items = profile.interestCategories)
-                }
-            }
-
-            item {
-                TechFixCard {
-                    Text("Preferências de Atendimento", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(6.dp))
-                    profile.preferences.forEach { PreferenceRow(it) }
-                }
-            }
-
-            item {
-                TechFixCard {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Indicador de Confiança", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                        Surface(color = TechFixGreenBg, shape = RoundedCornerShape(50)) {
+            if (!isProfessional) {
+                item(key = "interests") {
+                    TechFixCard {
+                        SectionHeader(
+                            title = "Categorias de Interesse",
+                            actionLabel = if (profile.interestCategories.isEmpty()) "Adicionar" else "Editar",
+                            onAction = onEditProfileClick
+                        )
+                        Spacer(Modifier.height(TechFixDimens.Space12))
+                        if (profile.interestCategories.isEmpty()) {
                             Text(
-                                profile.loyaltyLabel,
-                                color = TechFixGreen,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                "Escolha os tipos de serviço que mais te interessam.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TechFixTextTertiary
                             )
+                        } else {
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(TechFixDimens.Space8),
+                                verticalArrangement = Arrangement.spacedBy(TechFixDimens.Space8)
+                            ) {
+                                profile.interestCategories.forEach { InterestChip(it) }
+                            }
                         }
                     }
-                    Spacer(Modifier.height(14.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Fidelidade", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.6f))
-                        Text("${profile.loyaltyPercent}%", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                }
+
+                item(key = "preferences") {
+                    TechFixCard {
+                        SectionHeader(
+                            title = "Preferências de Atendimento",
+                            actionLabel = if (profile.preferences.isEmpty()) "Adicionar" else "Editar",
+                            onAction = onEditProfileClick
+                        )
+                        Spacer(Modifier.height(TechFixDimens.Space8))
+                        if (profile.preferences.isEmpty()) {
+                            Text(
+                                "Diga como prefere ser atendido: presencial, horários, orçamento…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TechFixTextTertiary
+                            )
+                        } else {
+                            profile.preferences.forEach { PreferenceRow(it) }
+                        }
                     }
-                    Spacer(Modifier.height(6.dp))
-                    TechFixProgressBar(progress = profile.loyaltyPercent)
+                }
+
+                item(key = "trust") { TrustCard(profile) }
+            }
+
+            item(key = "history_header") {
+                SectionHeader(
+                    title = if (isProfessional) "Pedidos Recebidos" else "Histórico de Serviços",
+                    actionLabel = if (profile.serviceHistory.size > ProfileOptions.HISTORY_PREVIEW_COUNT) "Ver todos" else null,
+                    onAction = onSeeAllHistoryClick
+                )
+            }
+
+            if (profile.serviceHistory.isEmpty()) {
+                item(key = "history_empty") {
+                    TechFixCard {
+                        EmptyState(
+                            icon = Icons.Filled.Build,
+                            title = if (isProfessional) "Nenhum pedido ainda" else "Nenhum serviço ainda",
+                            description = if (isProfessional) {
+                                "Os pedidos que os clientes enviarem para você aparecem aqui."
+                            } else {
+                                "Quando você fizer um pedido, o acompanhamento e a garantia aparecem aqui."
+                            },
+                            actionLabel = if (isProfessional) null else "Solicitar Serviço",
+                            onAction = if (isProfessional) null else onRequestServiceClick
+                        )
+                    }
+                }
+            } else {
+                itemsIndexed(
+                    items = profile.serviceHistory.take(ProfileOptions.HISTORY_PREVIEW_COUNT),
+                    key = { index, _ -> "service_$index" }
+                ) { _, service ->
+                    ServiceHistoryCard(item = service)
                 }
             }
 
-            item {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Histórico de Serviços", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                    Text(
-                        "Ver todos",
-                        color = TechFixAccentSolid,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp,
-                        modifier = Modifier.clickable(onClick = onSeeAllHistoryClick)
-                    )
-                }
-            }
-
-            items(profile.serviceHistory) { item ->
-                ServiceHistoryCard(item = item)
-            }
-
-            item {
-                OutlinedButton(
+            item(key = "logout") {
+                TechFixSecondaryButton(
+                    text = "Sair da conta",
                     onClick = onLogoutClick,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(50),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, TechFixRed),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TechFixRed)
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Logout,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text("Sair da conta", fontWeight = FontWeight.SemiBold)
-                }
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    contentColor = TechFixRed,
+                    borderColor = TechFixRed
+                )
             }
 
-            item {
-                Spacer(Modifier.height(8.dp))
+            item(key = "footer") {
                 Text(
-                    "TechFix • Suporte Especializado",
+                    TechFixInfo.SUPPORT_LINE,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.4f),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = TechFixDimens.Space8)
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TechFixTopBar(onMenuClick: () -> Unit, onLogoClick: () -> Unit) {
-    TopAppBar(
-        title = {
-            Image(
-                painter = painterResource(R.drawable.logo_techfix),
-                contentDescription = "TechFix",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .height(34.dp)
-                    .clickable(
-                        interactionSource = androidx.compose.runtime.remember {
-                            androidx.compose.foundation.interaction.MutableInteractionSource()
-                        },
-                        indication = null,
-                        onClick = onLogoClick
-                    )
-            )
-        },
-        actions = {
-            IconButton(onClick = onMenuClick) {
-                Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = TechFixTextPrimary)
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = TechFixBackground)
-    )
-}
-
 @Composable
 private fun ProfileHeaderCard(
     profile: UserProfile,
+    isProfessional: Boolean,
     onEditProfileClick: () -> Unit,
     onRequestServiceClick: () -> Unit
 ) {
@@ -230,70 +308,91 @@ private fun ProfileHeaderCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AsyncImage(
-                model = profile.avatarUrl.ifBlank { R.drawable.placeholder_perfil },
-                contentDescription = "Foto de perfil",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(84.dp)
-                    .clip(CircleShape)
-                    .background(TechFixSurfaceVariant)
-            )
+            ProfileAvatar(model = profile.avatarUrl.ifBlank { R.drawable.placeholder_perfil })
 
-            Spacer(Modifier.height(12.dp))
-            Text(profile.name, style = MaterialTheme.typography.headlineSmall, color = Color.White, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(TechFixDimens.Space12))
+            if (profile.name.isNotBlank()) {
+                Text(
+                    profile.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                // Sem nome ainda: não inventamos um, convidamos a pessoa a preencher.
+                Text(
+                    "Adicione seu nome",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = TechFixAccentSolid,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable(onClick = onEditProfileClick)
+                        .padding(horizontal = TechFixDimens.Space8, vertical = TechFixDimens.Space4)
+                )
+            }
 
             if (profile.isVerified) {
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(TechFixDimens.Space4))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        Icons.Filled.CheckCircle,
+                        Icons.Filled.Verified,
                         contentDescription = null,
                         tint = TechFixGreen,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(TechFixDimens.IconSmall)
                     )
-                    Spacer(Modifier.width(4.dp))
-                    Text("Perfil Verificado", color = TechFixGreen, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Spacer(Modifier.width(TechFixDimens.Space4))
+                    Text(
+                        "Perfil Verificado",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TechFixGreen
+                    )
                 }
             }
 
-            Spacer(Modifier.height(6.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Filled.LocationOn,
-                    contentDescription = null,
-                    tint = TechFixTextTertiary,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    "${profile.location}  •  ${profile.memberSince}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.55f)
-                )
+            Spacer(Modifier.height(TechFixDimens.Space8))
+            InfoLine(
+                icon = Icons.Filled.LocationOn,
+                text = profile.location.ifBlank { "Localização não informada" },
+                muted = profile.location.isBlank()
+            )
+            if (profile.memberSince.isNotBlank()) {
+                Spacer(Modifier.height(TechFixDimens.Space4))
+                InfoLine(icon = Icons.Filled.DateRange, text = profile.memberSince, muted = false)
             }
 
-            Spacer(Modifier.height(16.dp))
-            OutlinedButton(
+            Spacer(Modifier.height(TechFixDimens.Space20))
+            TechFixSecondaryButton(
+                text = "Editar Perfil",
                 onClick = onEditProfileClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(50)
-            ) {
-                Text("Editar Perfil", color = Color.White)
-            }
-
-            Spacer(Modifier.height(10.dp))
-            Button(
-                onClick = onRequestServiceClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(containerColor = TechFixAccentSolid)
-            ) {
-                Text("Solicitar Serviço")
-                Spacer(Modifier.width(6.dp))
-                Icon(Icons.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                icon = Icons.Filled.Edit
+            )
+            if (!isProfessional) {
+                Spacer(Modifier.height(TechFixDimens.Space10))
+                TechFixPrimaryButton(
+                    text = "Solicitar Serviço",
+                    onClick = onRequestServiceClick,
+                    trailingIcon = Icons.AutoMirrored.Filled.ArrowForward
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun InfoLine(icon: ImageVector, text: String, muted: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = TechFixTextTertiary,
+            modifier = Modifier.size(TechFixDimens.IconSmall)
+        )
+        Spacer(Modifier.width(TechFixDimens.Space6))
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (muted) TechFixTextTertiary else TechFixTextSecondary
+        )
     }
 }
 
@@ -301,7 +400,7 @@ private fun ProfileHeaderCard(
 private fun StatsRow(profile: UserProfile) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(TechFixDimens.Space12)
     ) {
         StatPill(
             icon = Icons.Filled.CheckCircle,
@@ -312,30 +411,58 @@ private fun StatsRow(profile: UserProfile) {
         )
         StatPill(
             icon = Icons.Filled.Star,
-            iconTint = Color(0xFFE0C441),
+            iconTint = TechFixWarning,
             label = "Avaliação",
-            value = "${profile.rating} ★",
+            value = if (profile.rating > 0.0) {
+                "%.1f".format(Locale.forLanguageTag("pt-BR"), profile.rating)
+            } else "—",
             modifier = Modifier.weight(1f)
         )
         StatPill(
             icon = Icons.Filled.Shield,
             iconTint = TechFixAccentSolid,
             label = "Confiança",
-            value = "${profile.confidencePercent}%",
+            value = if (profile.confidencePercent > 0) "${profile.confidencePercent}%" else "—",
             modifier = Modifier.weight(1f)
         )
     }
 }
 
-/** Simula um FlowRow (quebra de linha automática) sem depender da lib experimental. */
 @Composable
-private fun FlowRowChips(items: List<String>, itemsPerRow: Int = 3) {
-    val chunks = items.chunked(itemsPerRow)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        chunks.forEach { rowItems ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                rowItems.forEach { InterestChip(it) }
+private fun TrustCard(profile: UserProfile) {
+    val hasScore = profile.loyaltyPercent > 0
+    TechFixCard {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Indicador de Confiança", style = MaterialTheme.typography.titleLarge)
+            Surface(
+                color = if (hasScore) TechFixGreenBg else TechFixSurfaceVariant,
+                shape = TechFixPillShape
+            ) {
+                Text(
+                    profile.loyaltyLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (hasScore) TechFixGreen else TechFixTextSecondary,
+                    modifier = Modifier.padding(
+                        horizontal = TechFixDimens.Space10,
+                        vertical = TechFixDimens.Space4
+                    )
+                )
             }
         }
+        Spacer(Modifier.height(TechFixDimens.Space12))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Fidelidade", style = MaterialTheme.typography.bodyMedium)
+            Text("${profile.loyaltyPercent}%", style = MaterialTheme.typography.labelLarge)
+        }
+        Spacer(Modifier.height(TechFixDimens.Space8))
+        TechFixProgressBar(
+            progress = profile.loyaltyPercent,
+            progressColor = TechFixGreen,
+            brush = if (hasScore) null else TechFixAccentBrush
+        )
     }
 }

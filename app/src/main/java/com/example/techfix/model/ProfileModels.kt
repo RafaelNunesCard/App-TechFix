@@ -1,5 +1,8 @@
 package com.example.techfix.model
 
+// Os campos de UserProfile e ServiceHistoryItem são os mesmos de antes
+// (o MainActivity monta e lê estes nomes). Só foram removidos os dados fictícios.
+
 data class UserProfile(
     val name: String,
     val avatarUrl: String,
@@ -28,54 +31,39 @@ data class ServiceHistoryItem(
     val description: String,
     val status: ServiceStatus,
     val progress: Int,
-    val dateLabel: String, // "FINALIZADO EM" ou "PREVISÃO DE ENTREGA"
+    val dateLabel: String, // "FINALIZADO EM" ou "ABERTO EM"
     val date: String,
     val warranty: String? = null // ex: "Válida por 90 dias"
 )
 
-// Dados de exemplo extraídos do protótipo Figma para preview/teste
-object SampleData {
-    val carlosProfile = UserProfile(
-        name = "Carlos Eduardo Araujo",
-        avatarUrl = "https://exemplo.com/avatar.jpg",
-        isVerified = true,
-        location = "São Paulo, SP",
-        memberSince = "Membro desde Março 2024",
-        completedServices = 12,
-        rating = 4.8,
-        confidencePercent = 96,
-        bio = "Profissional de TI com interesse em manutenção preventiva e upgrades de " +
-            "hardware. Valorizo pontualidade, qualidade no serviço e comunicação clara.",
-        interestCategories = listOf(
-            "Reparo de Notebooks", "Troca de Tela", "Upgrade", "Preventiva", "Dados"
-        ),
-        preferences = listOf(
-            "Atendimento presencial preferido",
-            "Horário flexível (manhã ou tarde)",
-            "Prefere orçamento prévio",
-            "Comunicação via app"
-        ),
-        loyaltyLabel = "Excelente",
-        loyaltyPercent = 96,
-        serviceHistory = listOf(
-            ServiceHistoryItem(
-                deviceName = "MacBook Pro 16",
-                description = "Troca de bateria & limpeza interna técnica",
-                status = ServiceStatus.CONCLUIDO,
-                progress = 100,
-                dateLabel = "FINALIZADO EM",
-                date = "14/10/2026",
-                warranty = "Válida por 90 dias"
-            ),
-            ServiceHistoryItem(
-                deviceName = "iPhone 14 Pro",
-                description = "Substituição de tela OLED frontal",
-                status = ServiceStatus.CONCLUIDO,
-                progress = 100,
-                dateLabel = "FINALIZADO EM",
-                date = "28/09/2026",
-                warranty = "Válida por 90 dias"
-            )
-        )
+/** Opções e limites da edição de perfil. As categorias são as mesmas do onboarding do cliente. */
+object ProfileOptions {
+    val interests = listOf(
+        "Computadores",
+        "Celulares",
+        "Wi-Fi e Redes",
+        "Elétrica",
+        "Hidráulica",
+        "Manutenção",
+        "Pintura",
+        "Fotografia"
     )
+
+    val preferences = listOf(
+        "Atendimento presencial preferido",
+        "Horário flexível (manhã ou tarde)",
+        "Prefere orçamento prévio",
+        "Comunicação via app"
+    )
+
+    const val MAX_NAME = 60
+    const val MAX_LOCATION = 60
+    const val MAX_BIO = 200
+
+    /** Quantos serviços aparecem no perfil; o restante fica na aba Pedidos. */
+    const val HISTORY_PREVIEW_COUNT = 3
+
+    /** Demonstração: 5 toques seguidos na logo abrem o visualizador do banco. */
+    const val DB_VIEWER_TAPS = 5
+    const val DB_VIEWER_TAP_WINDOW_MS = 800L
 }
