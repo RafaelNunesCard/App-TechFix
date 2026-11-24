@@ -50,20 +50,18 @@ fun StatPill(
         shape = RoundedCornerShape(14.dp),
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 10.dp),
-            horizontalAlignment = Alignment.Start
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(14.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    label.uppercase(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.5f)
-                )
-            }
-            Spacer(Modifier.height(6.dp))
-            Text(value, style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
+            Text(label, style = MaterialTheme.typography.bodySmall, color = TechFixTextSecondary)
+            Text(
+                value,
+                style = MaterialTheme.typography.titleLarge,
+                color = TechFixTextPrimary,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
