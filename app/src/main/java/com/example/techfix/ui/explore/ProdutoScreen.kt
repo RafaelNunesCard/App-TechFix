@@ -18,7 +18,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.outlined.Receipt
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
@@ -46,6 +47,12 @@ import com.example.techfix.ui.components.TechFixBottomNav
 import com.example.techfix.ui.home.Professional
 import com.example.techfix.ui.theme.BackColor
 import com.example.techfix.ui.theme.SoraFamily
+import com.example.techfix.ui.theme.TechFixAccentSolid
+import com.example.techfix.ui.theme.TechFixBorder
+import com.example.techfix.ui.theme.TechFixSurface
+import com.example.techfix.ui.theme.TechFixSurfaceVariant
+import com.example.techfix.ui.theme.TechFixTextPrimary
+import com.example.techfix.ui.theme.TechFixTextSecondary
 import java.util.Locale
 
 val LaranjaTechFix = Color(0xFFFF6B35)
@@ -87,7 +94,8 @@ private fun initialsOf(name: String): String =
 fun ProdutoScreen(
     professionals: List<Professional> = emptyList(),
     onProfessionalClick: (String) -> Unit = {},
-    onNavItemSelected: (HomeNavItem) -> Unit = {}
+    onNavItemSelected: (HomeNavItem) -> Unit = {},
+    recentlyViewed: List<Professional> = emptyList()
 ) {
     var searchText by remember { mutableStateOf("") }
     var selectedSpecialty by remember { mutableStateOf<String?>(null) }
@@ -371,25 +379,9 @@ fun ProdutoScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // ---------- ESTATÍSTICAS (dados reais da lista) ----------
-                val average = if (professionals.isEmpty()) null else professionals.map { it.rating }.average()
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(SurfaceField)
-                        .height(IntrinsicSize.Min)
-                        .padding(vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    StatItem("${professionals.size}", "PROFISSIONAIS", Modifier.weight(1f))
-                    Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.1f)))
-                    StatItem("${specialties.size}", "ESPECIALIDADES", Modifier.weight(1f))
-                    Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.1f)))
-                    StatItem(average?.oneDecimal() ?: "—", "NOTA MÉDIA", Modifier.weight(1f))
+                if (recentlyViewed.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    RecentProfessionalsCard(recentlyViewed, onProfessionalClick)
                 }
             }
 
@@ -592,14 +584,56 @@ private fun EmptyResults(hasFilters: Boolean, onClear: () -> Unit) {
 }
 
 @Composable
-private fun StatItem(valor: String, rotulo: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+private fun RecentProfessionalsCard(professionals: List<Professional>, onProfessionalClick: (String) -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = TechFixSurface,
+        border = BorderStroke(1.dp, TechFixBorder)
     ) {
-        Text(valor, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(rotulo, color = TextMuted, fontSize = 10.sp, maxLines = 1)
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.History,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = TechFixAccentSolid
+                )
+                Text(
+                    "Vistos recentemente",
+                    color = TechFixTextPrimary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            professionals.forEach { professional ->
+                Surface(
+                    onClick = { onProfessionalClick(professional.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = TechFixSurfaceVariant
+                ) {
+                    Row(
+                        modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(professional.name, color = TechFixTextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            Text(professional.specialty, color = TechFixTextSecondary, fontSize = 12.sp)
+                        }
+                        Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = TechFixTextSecondary)
+                    }
+                }
+            }
+        }
     }
 }
 
