@@ -34,6 +34,7 @@ import com.example.techfix.ui.theme.*
 @Composable
 fun EditProfileScreen(
     initialProfile: UserProfile = SampleData.carlosProfile,
+    isProfessional: Boolean = true,
     allInterestOptions: List<String> = listOf(
         "Reparo de Notebooks",
         "Troca de Tela",
@@ -204,37 +205,39 @@ fun EditProfileScreen(
                 )
             }
 
-            // Categorias de interesse
-            TechFixCard {
+            if (isProfessional) {
+                // Categorias de interesse
+                TechFixCard {
 
-                Text(
-                    text = "Categorias de Interesse",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
+                    Text(
+                        text = "Categorias de Interesse",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(4.dp))
 
-                Text(
-                    text = "Toque para selecionar ou remover",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.5f)
-                )
+                    Text(
+                        text = "Toque para selecionar ou remover",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.5f)
+                    )
 
-                Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(12.dp))
 
-                SelectableChipsFlow(
-                    options = allInterestOptions,
-                    selected = selectedInterests,
-                    onToggle = { option ->
-                        if (selectedInterests.contains(option)) {
-                            selectedInterests.remove(option)
-                        } else {
-                            selectedInterests.add(option)
+                    SelectableChipsFlow(
+                        options = (initialProfile.interestCategories + allInterestOptions).distinct(),
+                        selected = selectedInterests,
+                        onToggle = { option ->
+                            if (selectedInterests.contains(option)) {
+                                selectedInterests.remove(option)
+                            } else {
+                                selectedInterests.add(option)
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
 
             // Preferências de atendimento
@@ -290,7 +293,7 @@ fun EditProfileScreen(
                         name = name,
                         location = location,
                         bio = bio,
-                        interestCategories = selectedInterests.toList(),
+                        interestCategories = if (isProfessional) selectedInterests.toList() else emptyList(),
                         preferences = preferenceStates
                             .filterValues { it }
                             .keys
@@ -382,75 +385,29 @@ private fun TechFixTextField(
 /**
  * Chips seletíveis usados na edição de categorias.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SelectableChipsFlow(
     options: List<String>,
     selected: List<String>,
-    onToggle: (String) -> Unit,
-    itemsPerRow: Int = 2
+    onToggle: (String) -> Unit
 ) {
-
-    val chunks = options.chunked(itemsPerRow)
-
-    Column(
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
-        chunks.forEach { rowItems ->
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-
-                rowItems.forEach { option ->
-
-                    val isSelected = selected.contains(option)
-
-                    Surface(
-                        color = if (isSelected) {
-                            TechFixAccentSolid
-                        } else {
-                            TechFixChipBackground
-                        },
-                        shape = RoundedCornerShape(50),
-                        modifier = Modifier.clickable {
-                            onToggle(option)
-                        }
-                    ) {
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(
-                                horizontal = 14.dp,
-                                vertical = 8.dp
-                            )
-                        ) {
-
-                            if (isSelected) {
-
-                                Icon(
-                                    Icons.Filled.Check,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(14.dp)
-                                )
-
-                                Spacer(Modifier.width(4.dp))
-                            }
-
-                            Text(
-                                text = option,
-                                color = if (isSelected) {
-                                    Color.White
-                                } else {
-                                    Color.White.copy(alpha = 0.75f)
-                                },
-                                fontSize = 13.sp
-                            )
-                        }
-                    }
-                }
-            }
+        options.forEach { option ->
+            FilterChip(
+                selected = option in selected,
+                onClick = { onToggle(option) },
+                label = { Text(option) },
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = TechFixChipBackground,
+                    labelColor = TechFixTextSecondary,
+                    selectedContainerColor = TechFixAccentSolid,
+                    selectedLabelColor = TechFixTextPrimary
+                )
+            )
         }
     }
 }
