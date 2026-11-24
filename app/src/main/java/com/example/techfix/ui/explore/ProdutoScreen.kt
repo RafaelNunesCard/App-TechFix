@@ -15,8 +15,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
@@ -37,13 +35,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.techfix.ui.components.HomeNavItem
+import com.example.techfix.ui.components.TechFixBottomNav
 import com.example.techfix.ui.home.Professional
 import com.example.techfix.ui.theme.BackColor
 import com.example.techfix.ui.theme.SoraFamily
@@ -59,8 +58,6 @@ private val TextSecondary = Color(0xFFA0A0A5)
 private val TextMuted = Color(0xFF71717A)
 private val GreenOk = Color(0xFF34C759)
 private val AccentGradient = Brush.linearGradient(listOf(Color(0xFFFF8A3D), Color(0xFFFF3D68)))
-
-enum class ProdutoNavItem { HOME, EXPLORE, ORDERS, PROFILE }
 
 private enum class SortOption(val label: String) {
     RATING("Melhor avaliação"),
@@ -90,14 +87,13 @@ private fun initialsOf(name: String): String =
 fun ProdutoScreen(
     professionals: List<Professional> = emptyList(),
     onProfessionalClick: (String) -> Unit = {},
-    onNavItemSelected: (ProdutoNavItem) -> Unit = {}
+    onNavItemSelected: (HomeNavItem) -> Unit = {}
 ) {
     var searchText by remember { mutableStateOf("") }
     var selectedSpecialty by remember { mutableStateOf<String?>(null) }
     var filters by remember { mutableStateOf(ExploreFilters()) }
     var showFilters by remember { mutableStateOf(false) }
     var showAll by remember { mutableStateOf(false) }
-    var selectedNavItem by remember { mutableStateOf(ProdutoNavItem.EXPLORE) }
 
     val specialties = remember(professionals) { professionals.map { it.specialty }.distinct().sorted() }
     val isSearching = searchText.isNotBlank()
@@ -401,13 +397,7 @@ fun ProdutoScreen(
         }
 
         // ---------- NAVEGAÇÃO INFERIOR PADRONIZADA ----------
-        ProdutoBottomNav(
-            selected = selectedNavItem,
-            onItemSelected = {
-                selectedNavItem = it
-                onNavItemSelected(it)
-            }
-        )
+        TechFixBottomNav(selected = HomeNavItem.EXPLORE, onItemSelected = onNavItemSelected)
     }
 }
 
@@ -722,43 +712,3 @@ private fun FilterTitle(text: String) {
 // =========================================================================================
 // BARRA INFERIOR
 // =========================================================================================
-
-@Composable
-private fun ProdutoBottomNav(
-    selected: ProdutoNavItem,
-    onItemSelected: (ProdutoNavItem) -> Unit
-) {
-    Surface(color = CardDark, border = BorderStroke(1.dp, CardBorderIdle)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            NavItem(Icons.Default.Home, "Início", selected == ProdutoNavItem.HOME) { onItemSelected(ProdutoNavItem.HOME) }
-            NavItem(Icons.Default.Search, "Explorar", selected == ProdutoNavItem.EXPLORE) { onItemSelected(ProdutoNavItem.EXPLORE) }
-            NavItem(Icons.Outlined.Receipt, "Pedidos", selected == ProdutoNavItem.ORDERS) { onItemSelected(ProdutoNavItem.ORDERS) }
-            NavItem(Icons.Default.Person, "Perfil", selected == ProdutoNavItem.PROFILE) { onItemSelected(ProdutoNavItem.PROFILE) }
-        }
-    }
-}
-
-@Composable
-private fun NavItem(
-    icon: ImageVector,
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val tint = if (selected) LaranjaTechFix else TextSecondary
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
-    ) {
-        Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(text = label, color = tint, fontSize = 10.sp)
-    }
-}
