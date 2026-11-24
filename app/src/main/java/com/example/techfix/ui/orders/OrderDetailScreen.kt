@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
@@ -39,6 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.techfix.ui.theme.TechFixAccentBrush
+import com.example.techfix.data.local.ServiceReviewEntity
+import com.example.techfix.ui.components.OrderReviewCard
 import com.example.techfix.ui.theme.TechFixAccentSolid
 import com.example.techfix.ui.theme.TechFixBackground
 import com.example.techfix.ui.theme.TechFixBorder
@@ -81,7 +84,10 @@ fun OrderDetailScreen(
     detail: OrderDetail?,
     onBack: () -> Unit,
     onCancelOrder: () -> Unit,
-    onOpenChat: () -> Unit
+    onOpenChat: () -> Unit,
+    submittedReview: ServiceReviewEntity? = null,
+    canReview: Boolean = false,
+    onSubmitReview: suspend (Int, String) -> Boolean = { _, _ -> false }
 ) {
     var confirmCancel by remember { mutableStateOf(false) }
 
@@ -101,7 +107,7 @@ fun OrderDetailScreen(
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = TechFixBackground) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().imePadding()) {
             DetailHeader(title = if (detail != null) "Pedido #${detail.id}" else "Pedido", onBack = onBack)
 
             if (detail == null) {
@@ -154,6 +160,10 @@ fun OrderDetailScreen(
                     if (detail.schedule.isNotBlank()) InfoRow("Quando", detail.schedule)
                     if (detail.location.isNotBlank()) InfoRow("Onde", detail.location)
                     if (detail.problem.isNotBlank()) InfoRow("Descrição", detail.problem)
+                }
+
+                if (canReview && detail.status == OrderStatus.COMPLETED) {
+                    OrderReviewCard("Avaliar profissional", submittedReview, onSubmitReview)
                 }
 
                 PaymentCard(detail.priceCents)
