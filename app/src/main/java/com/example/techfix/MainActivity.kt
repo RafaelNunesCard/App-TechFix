@@ -30,7 +30,6 @@ import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.produtos.ui.explore.ProdutoNavItem
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -49,6 +48,7 @@ import com.example.techfix.data.UserSession
 import com.example.techfix.data.local.ChatMessageEntity
 import com.example.techfix.data.local.IncomingMessage
 import com.example.techfix.data.local.ProfessionalEntity
+import com.example.techfix.data.local.ProfessionalProfileEntity
 import com.example.techfix.data.local.ReceivedOrder
 import com.example.techfix.data.local.ServiceOrderEntity
 import com.example.techfix.data.local.TechFixDatabase
@@ -65,7 +65,7 @@ import com.example.techfix.ui.auth.AuthViewModel
 import com.example.techfix.ui.auth.ForgotPasswordScreen
 import com.example.techfix.ui.auth.LoginScreen
 import com.example.techfix.ui.auth.SignUpBasicInfoScreen
-import com.example.techfix.ui.home.HomeNavItem
+import com.example.techfix.ui.components.HomeNavItem
 import com.example.techfix.ui.chat.ChatBubble
 import com.example.techfix.ui.chat.ChatScreen
 import com.example.techfix.ui.home.HomeScreen
@@ -82,7 +82,7 @@ import com.example.techfix.ui.onboarding.professional.ProServiceCategoriesScreen
 import com.example.techfix.ui.onboarding.professional.ProSpecialtiesScreen
 import com.example.techfix.ui.onboarding.professional.ProWorkDetails
 import com.example.techfix.ui.onboarding.professional.ProWorkDetailsScreen
-import com.example.techfix.ui.about.AboutScreen
+import com.example.techfix.ui.onboarding.professional.proServiceCategories
 import com.example.techfix.ui.profile.EditProfileScreen
 import com.example.techfix.ui.profile.ProfileScreen
 import com.example.techfix.ui.notifications.AppNotification
@@ -139,7 +139,6 @@ private object Routes {
     const val SIGN_UP = "sign_up"
     const val FORGOT_PASSWORD = "forgot_password"
     const val PATHWAY = "pathway"
-    const val ABOUT = "about"
 
     // Client onboarding
     const val CATEGORIES = "categories"
@@ -185,6 +184,9 @@ private val categoryLabels = mapOf(
     "photography" to "Fotografia"
 )
 
+private val professionalCategoryLabels = categoryLabels +
+    proServiceCategories.associate { it.id to it.label }
+
 private val priorityLabels = mapOf(
     "fastest_response" to "Resposta mais rápida primeiro",
     "best_price" to "Melhor preço primeiro",
@@ -220,8 +222,7 @@ private fun availabilityLabel(dayIds: Set<String>): String {
  */
 private fun buildUserProfile(
     fullName: String,
-    createdAtMillis: Long,
-    interestCategories: List<String>
+    createdAtMillis: Long
 ): UserProfile {
     val memberSinceLabel = try {
         val formatted = SimpleDateFormat("MMMM 'de' yyyy", Locale("pt", "BR"))
@@ -242,7 +243,7 @@ private fun buildUserProfile(
         rating = 0.0,
         confidencePercent = 0,
         bio = "",
-        interestCategories = interestCategories,
+        interestCategories = emptyList(),
         preferences = emptyList(),
         loyaltyLabel = "Novo por aqui",
         loyaltyPercent = 0,
@@ -272,14 +273,17 @@ private fun ServiceOrderEntity.toUi() = ServiceOrder(
     price = formatPrice(priceCents)
 )
 
-private fun ProfessionalEntity.toUi() = Professional(
+private fun ProfessionalEntity.toUi(profile: ProfessionalProfileEntity? = null) = Professional(
     id = id,
     name = name,
     specialty = specialty,
     rating = rating,
     reviewCount = reviewCount,
     distanceKm = distanceKm,
-    available = available
+    available = available,
+    serviceCategoryIds = profile?.serviceCategoryIds.orEmpty().split(",")
+        .filter { it.isNotBlank() }.toSet(),
+    specialties = profile?.specialtyIds.orEmpty().split(",").filter { it.isNotBlank() }
 )
 
 /** No lado do profissional, o campo "professionalName" mostra o nome do CLIENTE. */
@@ -413,6 +417,17 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     // "Início" a pessoa vê (cliente: HOME, profissional: PRO_HOME).
     var isProfessional by remember { mutableStateOf(false) }
     val homeRoute: () -> String = { if (isProfessional) Routes.PRO_HOME else Routes.HOME }
+    val navigateToMainTab: (HomeNavItem) -> Unit = { item ->
+        val route = when (item) {
+            HomeNavItem.HOME -> homeRoute()
+            HomeNavItem.EXPLORE -> Routes.EXPLORE
+            HomeNavItem.ORDERS -> Routes.ORDERS
+            HomeNavItem.PROFILE -> Routes.PROFILE
+        }
+        if (navController.currentDestination?.route != route) {
+            navController.navigateToTab(route, homeRoute())
+        }
+    }
 
     // NOVO: ponte entre as telas e as tabelas novas do Room
     // (client_onboarding / professional_profile).
@@ -432,7 +447,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     var selectedPriorityId by remember { mutableStateOf("") }
 
     // Professional onboarding state
-    var proSelectedCategoryIds by remember { mutableStateOf(setOf("technology", "electrical")) }
+    var proSelectedCategoryIds by remember { mutableStateOf(emptySet<String>()) }
     var proSelectedSpecialties by remember { mutableStateOf(setOf<String>()) }
     var proWorkDetails by remember { mutableStateOf<ProWorkDetails?>(null) }
     var proProfileInfo by remember { mutableStateOf<ProProfileInfo?>(null) }
@@ -442,7 +457,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     // (ver os blocos LaunchedEffect abaixo), é substituído pelos dados
     // reais de quem está logado.
     var userProfile by remember {
-        mutableStateOf(buildUserProfile(fullName = "", createdAtMillis = System.currentTimeMillis(), interestCategories = emptyList()))
+        mutableStateOf(buildUserProfile(fullName = "", createdAtMillis = System.currentTimeMillis()))
     }
 
     NavHost(
@@ -478,25 +493,18 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                         val user = UserSession.currentUser
                         userProfile = buildUserProfile(
                             fullName = state.fullName,
-                            createdAtMillis = user?.createdAt ?: System.currentTimeMillis(),
-                            interestCategories = emptyList()
+                            createdAtMillis = user?.createdAt ?: System.currentTimeMillis()
                         )
-                        // Em paralelo, busca no Room se esse usuário já tem
-                        // interesses salvos de um onboarding anterior, e
-                        // completa o perfil assim que a busca terminar.
                         coroutineScope.launch {
-                            val saved = onboardingRepository.getClientOnboarding(state.email)
-                            if (saved != null) {
-                                userProfile = userProfile.copy(
-                                    interestCategories = saved.selectedCategoryIds.mapNotNull { categoryLabels[it] }
-                                )
-                            }
-
                             // Tem perfil profissional salvo? Então entra como profissional.
                             val proProfile = database.professionalProfileDao().getByEmail(state.email)
                             isProfessional = proProfile != null
                             if (proProfile != null) {
-                                userProfile = userProfile.copy(bio = proProfile.bio)
+                                userProfile = userProfile.copy(
+                                    bio = proProfile.bio,
+                                    interestCategories = proProfile.serviceCategoryIds.split(",")
+                                        .mapNotNull { professionalCategoryLabels[it] }
+                                )
                             }
 
                             navController.navigate(if (proProfile != null) Routes.PRO_HOME else Routes.HOME) {
@@ -553,8 +561,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                         val user = UserSession.currentUser
                         userProfile = buildUserProfile(
                             fullName = state.fullName,
-                            createdAtMillis = user?.createdAt ?: System.currentTimeMillis(),
-                            interestCategories = emptyList()
+                            createdAtMillis = user?.createdAt ?: System.currentTimeMillis()
                         )
 
                         navController.navigate(Routes.PATHWAY)
@@ -634,6 +641,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         // ================= PROFESSIONAL ONBOARDING =================
         composable(Routes.PRO_SERVICES) {
             ProServiceCategoriesScreen(
+                initialSelectedIds = proSelectedCategoryIds,
                 onBack = { navController.popBackStack() },
                 onContinue = { selectedIds ->
                     proSelectedCategoryIds = selectedIds
@@ -645,6 +653,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         composable(Routes.PRO_SPECIALTIES) {
             ProSpecialtiesScreen(
                 selectedCategoryIds = proSelectedCategoryIds,
+                initialSelectedSpecialties = proSelectedSpecialties,
                 onBack = { navController.popBackStack() },
                 onContinue = { specialties ->
                     proSelectedSpecialties = specialties
@@ -715,7 +724,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                             photoUri = ProfilePrefs.photoUri(context, loggedInEmail)
                         )
 
-                        // Aparece em "Profissionais em destaque" na Home dos clientes.
+                        // Disponibiliza o perfil nas buscas dos clientes.
                         database.professionalDao().insertAll(
                             listOf(
                                 ProfessionalEntity(
@@ -723,7 +732,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                                     email = loggedInEmail,
                                     name = profile?.fullName?.ifBlank { null } ?: loggedInFullName,
                                     specialty = proSelectedCategoryIds
-                                        .mapNotNull { categoryLabels[it] }
+                                        .mapNotNull { professionalCategoryLabels[it] }
                                         .firstOrNull() ?: "Profissional TechFix",
                                     rating = 0.0,
                                     reviewCount = 0,
@@ -733,6 +742,10 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                             )
                         )
                     }
+                    userProfile = userProfile.copy(
+                        bio = profile?.shortBio.orEmpty(),
+                        interestCategories = proSelectedCategoryIds.mapNotNull { professionalCategoryLabels[it] }
+                    )
                     isProfessional = true
                     navController.navigate(Routes.PRO_HOME) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
@@ -751,20 +764,21 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             val professionals by remember { database.professionalDao().observeAll() }
                 .collectAsState(initial = emptyList())
 
+            val professionalProfiles by remember { database.professionalProfileDao().observeAll() }
+                .collectAsState(initial = emptyList())
+            val profilesByEmail = remember(professionalProfiles) { professionalProfiles.associateBy { it.userEmail } }
+            val orders by remember(loggedInEmail) {
+                database.serviceOrderDao().observeByClient(loggedInEmail)
+            }.collectAsState(initial = emptyList())
+
             HomeScreen(
                 userFirstName = firstName,
-                professionals = professionals.map { it.toUi() },
+                professionals = professionals.map { it.toUi(it.email?.let(profilesByEmail::get)) },
+                orders = orders.map { it.toUi() },
+                onOrderClick = { orderId -> navController.navigate("order_detail/$orderId") },
                 onProfessionalClick = { id -> navController.navigate("request_service/$id") },
                 onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) },
-                onAboutClick = { navController.navigate(Routes.ABOUT) },
-                onNavItemSelected = { item ->
-                    when (item) {
-                        HomeNavItem.HOME -> Unit
-                        HomeNavItem.EXPLORE -> navController.navigateToTab(Routes.EXPLORE, homeRoute())
-                        HomeNavItem.ORDERS -> navController.navigateToTab(Routes.ORDERS, homeRoute())
-                        HomeNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE, homeRoute())
-                    }
-                }
+                onNavItemSelected = navigateToMainTab
             )
         }
 
@@ -802,14 +816,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 },
                 onViewRequests = { navController.navigateToTab(Routes.ORDERS, homeRoute()) },
                 onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) },
-                onNavItemSelected = { item ->
-                    when (item) {
-                        HomeNavItem.HOME -> Unit
-                        HomeNavItem.EXPLORE -> navController.navigateToTab(Routes.EXPLORE, homeRoute())
-                        HomeNavItem.ORDERS -> navController.navigateToTab(Routes.ORDERS, homeRoute())
-                        HomeNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE, homeRoute())
-                    }
-                }
+                onNavItemSelected = navigateToMainTab
             )
         }
 
@@ -992,10 +999,6 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             DbViewerScreen(database = database, onBack = { navController.popBackStack() })
         }
 
-        composable(Routes.ABOUT) {
-            AboutScreen(onBack = { navController.popBackStack() })
-        }
-
         // ---------------- Barra inferior da Home ----------------
         composable(Routes.EXPLORE) {
             val explorePros by remember { database.professionalDao().observeAll() }
@@ -1004,14 +1007,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             ProdutoScreen(
                 professionals = explorePros.map { it.toUi() },
                 onProfessionalClick = { id -> navController.navigate("request_service/$id") },
-                onNavItemSelected = { item ->
-                    when (item) {
-                        ProdutoNavItem.HOME -> navController.navigateToTab(homeRoute(), homeRoute())
-                        ProdutoNavItem.EXPLORE -> Unit
-                        ProdutoNavItem.ORDERS -> navController.navigateToTab(Routes.ORDERS, homeRoute())
-                        ProdutoNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE, homeRoute())
-                    }
-                }
+                onNavItemSelected = navigateToMainTab
             )
         }
 
@@ -1031,14 +1027,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                         if (isProfessional) "pro_request/$orderId" else "order_detail/$orderId"
                     )
                 },
-                onNavItemSelected = { item ->
-                    when (item) {
-                        HomeNavItem.HOME -> navController.navigateToTab(homeRoute(), homeRoute())
-                        HomeNavItem.EXPLORE -> navController.navigateToTab(Routes.EXPLORE, homeRoute())
-                        HomeNavItem.ORDERS -> Unit
-                        HomeNavItem.PROFILE -> navController.navigateToTab(Routes.PROFILE, homeRoute())
-                    }
-                }
+                onNavItemSelected = navigateToMainTab
             )
         }
 
@@ -1065,13 +1054,13 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 isProfessional = false
                 selectedCategoryIds = emptySet()
                 selectedPriorityId = ""
+                proSelectedCategoryIds = emptySet()
                 proSelectedSpecialties = emptySet()
                 proWorkDetails = null
                 proProfileInfo = null
                 userProfile = buildUserProfile(
                     fullName = "",
-                    createdAtMillis = System.currentTimeMillis(),
-                    interestCategories = emptyList()
+                    createdAtMillis = System.currentTimeMillis()
                 )
                 navController.navigate(Routes.LOGIN) {
                     popUpTo(navController.graph.id) { inclusive = true }
@@ -1118,12 +1107,14 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                         .filter { it.status != OrderStatus.CANCELED }
                         .map { it.toHistoryItem() }
                 ),
+                isProfessional = isProfessional,
                 onMenuClick = { showMenuDialog = true },
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
                 onRequestServiceClick = { navController.navigate("request_service/0") },
                 onSeeAllHistoryClick = { navController.navigateToTab(Routes.ORDERS, homeRoute()) },
                 onLogoutClick = { performLogout() },
-                onOpenDbViewer = { navController.navigate(Routes.DB_VIEWER) }
+                onOpenDbViewer = { navController.navigate(Routes.DB_VIEWER) },
+                onNavItemSelected = navigateToMainTab
             )
         }
 
@@ -1140,6 +1131,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             }
             EditProfileScreen(
                 initialProfile = userProfile.copy(avatarUrl = editPhoto ?: ""),
+                isProfessional = isProfessional,
                 onBackClick = { navController.popBackStack() },
                 onCancel = { navController.popBackStack() },
                 onSave = { updatedProfile ->
