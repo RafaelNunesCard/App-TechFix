@@ -3,6 +3,7 @@ package com.example.techfix.data.local
 import androidx.room.Dao
 import androidx.room.Embedded
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
@@ -20,6 +21,9 @@ interface ServiceOrderDao {
 
     @Insert
     suspend fun insertAll(orders: List<ServiceOrderEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMissingDemoOrders(orders: List<ServiceOrderEntity>)
 
     /** Pedidos de um cliente, do mais novo para o mais antigo. Atualiza sozinho a tela quando muda. */
     @Query("SELECT * FROM service_orders WHERE clientEmail = :email ORDER BY createdAt DESC")
