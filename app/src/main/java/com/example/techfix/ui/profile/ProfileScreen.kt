@@ -7,22 +7,29 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.techfix.R
 import com.example.techfix.model.SampleData
@@ -196,16 +203,99 @@ fun ProfileScreen(
                 }
             }
 
-            item {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "TechFix • Suporte Especializado",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.4f),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
+        }
+    }
+}
+
+@Composable
+internal fun ProfileMenuDialog(
+    onDismissRequest: () -> Unit,
+    onNotificationsClick: () -> Unit,
+    onPaymentClick: () -> Unit,
+    onLogoutClick: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = TechFixSurface,
+            border = BorderStroke(1.dp, TechFixBorder)
+        ) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "Menu",
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = TechFixTextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    IconButton(
+                        onClick = onDismissRequest,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = TechFixChipBackground,
+                            contentColor = TechFixTextSecondary
+                        )
+                    ) {
+                        Icon(Icons.Filled.Close, contentDescription = "Fechar menu")
+                    }
+                }
+
+                ProfileMenuOption("Notificações", Icons.Outlined.Notifications, onNotificationsClick)
+                ProfileMenuOption("Formas de pagamento", Icons.Outlined.CreditCard, onPaymentClick)
+
+                HorizontalDivider(Modifier.padding(top = 4.dp), color = TechFixDivider)
+                TextButton(
+                    onClick = onLogoutClick,
+                    modifier = Modifier.align(Alignment.Start),
+                    colors = ButtonDefaults.textButtonColors(contentColor = TechFixRed)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Sair da conta", fontWeight = FontWeight.SemiBold)
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun ProfileMenuOption(label: String, icon: ImageVector, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = TechFixSurfaceVariant,
+        border = BorderStroke(1.dp, TechFixBorder)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(36.dp)
+                    .background(TechFixChipBackground, RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = TechFixAccentSolid, modifier = Modifier.size(20.dp))
+            }
+            Text(
+                label,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                color = TechFixTextPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
+            Icon(
+                Icons.Outlined.ChevronRight,
+                contentDescription = null,
+                tint = TechFixTextTertiary,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
