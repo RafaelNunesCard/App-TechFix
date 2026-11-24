@@ -149,7 +149,7 @@ fun OrderDetailScreen(
                 DetailCard {
                     SectionTitle("Detalhes do serviço")
                     Spacer(Modifier.height(10.dp))
-                    InfoRow("Aparelho", detail.deviceName)
+                    InfoRow("Item ou área", detail.deviceName)
                     InfoRow("Serviço", detail.service)
                     if (detail.schedule.isNotBlank()) InfoRow("Quando", detail.schedule)
                     if (detail.location.isNotBlank()) InfoRow("Onde", detail.location)

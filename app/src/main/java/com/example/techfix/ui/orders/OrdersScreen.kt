@@ -11,7 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -20,7 +20,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.techfix.ui.home.HomeNavItem
+import com.example.techfix.ui.components.HomeNavItem
+import com.example.techfix.ui.components.TechFixBottomNav
 
 private val BackgroundDark = Color(0xFF121212)
 private val CardDark = Color(0xFF1C1C1E)
@@ -85,10 +86,6 @@ fun OrdersScreen(
     onOrderClick: (String) -> Unit = {},
     onNavItemSelected: (HomeNavItem) -> Unit = {}
 ) {
-    var selectedNavItem by remember {
-        mutableStateOf(HomeNavItem.ORDERS)
-    }
-
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = BackgroundDark
@@ -98,10 +95,12 @@ fun OrdersScreen(
         ) {
 
             LazyColumn(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).statusBarsPadding(),
                 contentPadding = PaddingValues(
-                    horizontal = 24.dp,
-                    vertical = 20.dp
+                    start = 24.dp,
+                    top = 24.dp,
+                    end = 24.dp,
+                    bottom = 20.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -166,13 +165,7 @@ fun OrdersScreen(
                 }
             }
 
-            OrdersBottomNav(
-                selected = selectedNavItem,
-                onItemSelected = {
-                    selectedNavItem = it
-                    onNavItemSelected(it)
-                }
-            )
+            TechFixBottomNav(selected = HomeNavItem.ORDERS, onItemSelected = onNavItemSelected)
         }
     }
 }
@@ -530,7 +523,7 @@ private fun deviceIcon(
             Icons.Outlined.Computer
 
         else ->
-            Icons.Outlined.Devices
+            Icons.Outlined.Build
     }
 }
 
@@ -570,105 +563,6 @@ private fun EmptyOrders() {
             text = "Seus pedidos de serviço aparecerão aqui.",
             color = TextSecondary,
             fontSize = 12.sp
-        )
-    }
-}
-
-
-@Composable
-private fun OrdersBottomNav(
-    selected: HomeNavItem,
-    onItemSelected: (HomeNavItem) -> Unit
-) {
-    Surface(
-        color = CardDark,
-        border = BorderStroke(
-            1.dp,
-            CardBorderIdle
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-
-            OrdersNavItem(
-                icon = Icons.Outlined.Home,
-                label = "Início",
-                selected = selected == HomeNavItem.HOME,
-                onClick = {
-                    onItemSelected(HomeNavItem.HOME)
-                }
-            )
-
-            OrdersNavItem(
-                icon = Icons.Outlined.Search,
-                label = "Explorar",
-                selected = selected == HomeNavItem.EXPLORE,
-                onClick = {
-                    onItemSelected(HomeNavItem.EXPLORE)
-                }
-            )
-
-            OrdersNavItem(
-                icon = Icons.Outlined.Receipt,
-                label = "Pedidos",
-                selected = selected == HomeNavItem.ORDERS,
-                onClick = {
-                    onItemSelected(HomeNavItem.ORDERS)
-                }
-            )
-
-            OrdersNavItem(
-                icon = Icons.Outlined.Person,
-                label = "Perfil",
-                selected = selected == HomeNavItem.PROFILE,
-                onClick = {
-                    onItemSelected(HomeNavItem.PROFILE)
-                }
-            )
-        }
-    }
-}
-
-
-@Composable
-private fun OrdersNavItem(
-    icon: ImageVector,
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val tint = if (selected) {
-        AccentEnd
-    } else {
-        TextSecondary
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(
-            onClick = onClick
-        )
-    ) {
-
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = tint,
-            modifier = Modifier.size(20.dp)
-        )
-
-        Spacer(
-            modifier = Modifier.height(2.dp)
-        )
-
-        Text(
-            text = label,
-            color = tint,
-            fontSize = 10.sp
         )
     }
 }
