@@ -62,4 +62,4 @@ jobs:
           gh release create ultima-versao techfix.apk \
             --title "TechFix - última versão" \
             --target "$GITHUB_SHA" \
-            --notes "APK de teste gerado automaticamente em $DATA (commit $SHORT_SHA). Para instalar, desinstale antes a versão anterior do app."
+            --notes "APK de teste gerado automaticamente em $DATA (commit $SHORT_SHA). Se o TechFix já estiver instalado, abra o APK e toque em Atualizar."
