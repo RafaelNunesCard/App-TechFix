@@ -27,6 +27,7 @@ object DemoData {
     const val PASSWORD = "techfix123"
 
     private const val DAY = 24L * 60 * 60 * 1000
+    private const val REVIEWED_ORDER_ID = -5L
 
     suspend fun seedIfNeeded(db: TechFixDatabase) = withContext(Dispatchers.Default) {
         val userDao = db.userDao()
@@ -121,7 +122,8 @@ object DemoData {
                         serviceDescription = "Limpeza interna e troca de pasta térmica",
                         status = "IN_PROGRESS", priceCents = 18000, createdAt = now,
                         problemText = "O notebook esquenta muito e desliga sozinho depois de uns 20 minutos.",
-                        scheduledLabel = "Hoje, 16:00", locationLabel = "Na casa do cliente - Rua das Flores, 120"
+                        scheduledLabel = "Hoje, 16:00", locationLabel = "Na casa do cliente - Rua das Flores, 120",
+                        professionalId = "1"
                     ),
                     ServiceOrderEntity(
                         clientEmail = CLIENT_EMAIL, professionalEmail = PRO_EMAIL,
@@ -130,7 +132,8 @@ object DemoData {
                         serviceDescription = "Instalação e configuração da rede da casa",
                         status = "PENDING", priceCents = null, createdAt = now - 1 * DAY,
                         problemText = "Preciso instalar um roteador novo e configurar a rede para toda a casa.",
-                        scheduledLabel = "Amanhã, 09:00", locationLabel = "Na casa do cliente - Rua das Flores, 120"
+                        scheduledLabel = "Amanhã, 09:00", locationLabel = "Na casa do cliente - Rua das Flores, 120",
+                        professionalId = "1"
                     ),
                     ServiceOrderEntity(
                         clientEmail = CLIENT_EMAIL, professionalEmail = null,
@@ -139,7 +142,7 @@ object DemoData {
                         serviceDescription = "Substituição da tela OLED frontal",
                         status = "WAITING_PARTS", priceCents = 89000, createdAt = now - 3 * DAY,
                         problemText = "A tela trincou depois de uma queda e o toque parou de funcionar.",
-                        scheduledLabel = "Há 3 dias", locationLabel = "Levar ao técnico"
+                        scheduledLabel = "Há 3 dias", locationLabel = "Levar ao técnico", professionalId = "2"
                     ),
                     ServiceOrderEntity(
                         clientEmail = CLIENT_EMAIL, professionalEmail = null,
@@ -148,7 +151,7 @@ object DemoData {
                         serviceDescription = "Troca de bateria e limpeza técnica",
                         status = "COMPLETED", priceCents = 42000, createdAt = now - 30 * DAY,
                         problemText = "A bateria não segura mais carga e o aparelho precisa de limpeza.",
-                        scheduledLabel = "Há 30 dias", locationLabel = "Levar ao técnico"
+                        scheduledLabel = "Há 30 dias", locationLabel = "Levar ao técnico", professionalId = "3"
                     )
                 )
             )
@@ -170,7 +173,8 @@ object DemoData {
                     createdAt = now,
                     problemText = "A varanda tem dois pontos de luz e já comprei as luminárias.",
                     scheduledLabel = "Horário a combinar",
-                    locationLabel = "Na casa da cliente"
+                    locationLabel = "Na casa da cliente",
+                    professionalId = "1"
                 ),
                 ServiceOrderEntity(
                     id = -2L,
@@ -199,8 +203,46 @@ object DemoData {
                     problemText = "Pintar as quatro paredes e corrigir pequenos furos antes da aplicação.",
                     scheduledLabel = "Atendimento realizado",
                     locationLabel = "Na casa da cliente"
+                ),
+                ServiceOrderEntity(
+                    id = -4L,
+                    clientEmail = CLIENT_EMAIL,
+                    professionalEmail = PRO_EMAIL,
+                    professionalName = "Carlos Mendes",
+                    deviceName = "Tomadas da sala",
+                    serviceDescription = "Troca de tomadas",
+                    status = "COMPLETED",
+                    priceCents = 14000,
+                    createdAt = now - DAY,
+                    scheduledLabel = "Atendimento realizado",
+                    locationLabel = "Na casa da cliente",
+                    professionalId = "1"
+                ),
+                ServiceOrderEntity(
+                    id = REVIEWED_ORDER_ID,
+                    clientEmail = CLIENT_EMAIL,
+                    professionalEmail = PRO_EMAIL,
+                    professionalName = "Carlos Mendes",
+                    deviceName = "Iluminação da cozinha",
+                    serviceDescription = "Reparo do ponto de luz",
+                    status = "COMPLETED",
+                    priceCents = 16000,
+                    createdAt = now - 20 * DAY,
+                    scheduledLabel = "Atendimento realizado",
+                    locationLabel = "Na casa da cliente",
+                    professionalId = "1"
                 )
             )
         )
+
+        submitServiceReview(
+            db, REVIEWED_ORDER_ID, CLIENT_EMAIL, ReviewAuthor.CLIENT, 5,
+            "Chegou no horário e explicou o que precisou trocar. A luz ficou funcionando direitinho."
+        )
+        submitServiceReview(
+            db, REVIEWED_ORDER_ID, PRO_EMAIL, ReviewAuthor.PROFESSIONAL, 5,
+            "Descreveu bem o problema e deixou o local pronto para o atendimento."
+        )
+        Unit
     }
 }
