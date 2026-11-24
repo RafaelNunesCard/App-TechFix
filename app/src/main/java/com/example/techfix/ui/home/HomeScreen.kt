@@ -2,7 +2,6 @@ package com.example.techfix.ui.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,42 +9,33 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.techfix.ui.components.HomeNavItem
+import com.example.techfix.ui.components.TechFixBottomNav
+import com.example.techfix.ui.onboarding.professional.proServiceCategories
+import com.example.techfix.ui.orders.OrderStatus
+import com.example.techfix.ui.orders.ServiceOrder
+import com.example.techfix.ui.theme.*
+import java.text.Normalizer
+import java.util.Locale
 
-// ---- Design tokens (same palette used across the whole app) ----
-private val BackgroundDark = Color(0xFF121212)
-private val CardDark = Color(0xFF1C1C1E)
-private val CardBorderIdle = Color(0xFF2C2C2E)
-private val ChipBackground = Color(0xFF2A2A2C)
-private val AccentStart = Color(0xFFFF8A3D) // orange
-private val AccentEnd = Color(0xFFFF3D68)   // pink/red
-private val TextPrimary = Color(0xFFFFFFFF)
-private val TextSecondary = Color(0xFFA0A0A5)
-private val TextLabel = Color(0xFF8E8E93)
-
-private val AccentGradient = Brush.horizontalGradient(listOf(AccentStart, AccentEnd))
-
-// =========================================================================================
-// DATA
-// =========================================================================================
-
-data class HomeCategory(val id: String, val label: String, val icon: ImageVector)
+private data class HomeCategory(val id: String, val label: String, val icon: ImageVector)
 
 data class Professional(
     val id: String,
@@ -54,233 +44,256 @@ data class Professional(
     val rating: Double,
     val reviewCount: Int,
     val distanceKm: Double,
-    val available: Boolean
+    val available: Boolean,
+    val serviceCategoryIds: Set<String> = emptySet(),
+    val specialties: List<String> = emptyList()
 )
 
 private val homeCategories = listOf(
     HomeCategory("computers", "Computadores", Icons.Outlined.Computer),
     HomeCategory("phones", "Celulares", Icons.Outlined.Smartphone),
-    HomeCategory("electrical", "Elétrica", Icons.Outlined.Bolt),
-    HomeCategory("plumbing", "Hidráulica", Icons.Outlined.Plumbing),
-    HomeCategory("painting", "Pintura", Icons.Outlined.FormatPaint)
+    HomeCategory("wifi", "Wi-Fi e Redes", Icons.Outlined.Wifi)
+) + proServiceCategories.map { HomeCategory(it.id, it.label, it.icon) }
+
+private val technologySubcategories = setOf("computers", "phones", "wifi")
+
+private val categoryAliases = mapOf(
+    "computers" to listOf("computador", "notebook", "informatica", "tecnico em ti"),
+    "phones" to listOf("celular", "smartphone", "iphone"),
+    "wifi" to listOf("wi-fi", "wifi", "rede"),
+    "electrical" to listOf("eletric"),
+    "plumbing" to listOf("encanador", "hidraulic"),
+    "maintenance" to listOf("manutenc"),
+    "painting" to listOf("pintor", "pintura")
 )
 
-// =========================================================================================
-// HOME SCREEN
-// =========================================================================================
+private val diacritics = "\\p{M}+".toRegex()
+private val searchSeparators = "[^a-z0-9]+".toRegex()
+private val wifiSpelling = "\\bwi fi\\b".toRegex()
+
+private fun String.searchTerms(): String =
+    Normalizer.normalize(lowercase(Locale.ROOT), Normalizer.Form.NFD)
+        .replace(diacritics, "")
+        .replace(searchSeparators, " ")
+        .replace(wifiSpelling, "wifi")
+        .trim()
+
+private fun Professional.matchesCategory(category: HomeCategory): Boolean {
+    if (category.id in serviceCategoryIds) return true
+    if (serviceCategoryIds.isNotEmpty() &&
+        (category.id !in technologySubcategories || "technology" !in serviceCategoryIds)
+    ) return false
+    val serviceText = (listOf(specialty) + specialties).joinToString(" ").searchTerms()
+    val aliases = categoryAliases[category.id].orEmpty() + category.label
+    return aliases.any { serviceText.contains(it.searchTerms()) } ||
+        (category.id == "technology" && technologySubcategories.any { subcategory ->
+            categoryAliases.getValue(subcategory).any { serviceText.contains(it.searchTerms()) }
+        })
+}
+
+private fun List<Professional>.matching(query: String, selectedCategory: HomeCategory?): List<Professional> {
+    val terms = if (query.isEmpty()) emptyList() else query.split(" ")
+    return filter { professional ->
+        val categories = homeCategories.filter { professional.matchesCategory(it) }
+        val searchable = (listOf(professional.name, professional.specialty) +
+            professional.specialties + categories.map { it.label }).joinToString(" ").searchTerms()
+        (selectedCategory == null || selectedCategory in categories) &&
+            terms.all { searchable.contains(it) }
+    }
+}
 
 @Composable
 fun HomeScreen(
     userFirstName: String,
     professionals: List<Professional> = emptyList(),
-    onSearchClick: () -> Unit = {},
-    onCategoryClick: (String) -> Unit = {},
+    orders: List<ServiceOrder> = emptyList(),
+    onOrderClick: (String) -> Unit = {},
     onProfessionalClick: (String) -> Unit = {},
     onNavItemSelected: (HomeNavItem) -> Unit = {},
-    onAboutClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {}
 ) {
-    var selectedNavItem by remember { mutableStateOf(HomeNavItem.HOME) }
+    var search by rememberSaveable { mutableStateOf("") }
+    var selectedCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
+    val query = remember(search) { search.searchTerms() }
+    val selectedCategory = homeCategories.firstOrNull { it.id == selectedCategoryId }
+    val isSearching = query.isNotEmpty() || selectedCategory != null
+    val matches = remember(professionals, query, selectedCategory) {
+        if (isSearching) professionals.matching(query, selectedCategory) else emptyList()
+    }
+    val activeOrders = orders.filter { it.status != OrderStatus.COMPLETED && it.status != OrderStatus.CANCELED }
 
-    Surface(modifier = Modifier.fillMaxSize(), color = BackgroundDark) {
+    Surface(modifier = Modifier.fillMaxSize(), color = TechFixBackground) {
         Column(modifier = Modifier.fillMaxSize()) {
-
             LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 20.dp)
+                modifier = Modifier.weight(1f).statusBarsPadding(),
+                contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                item { HomeHeader(userFirstName, onNotificationsClick) }
+                item { SearchBar(search, onSearchChange = { search = it }) }
+
                 item {
-                    HomeHeader(
-                        userFirstName = userFirstName,
-                        onAboutClick = onAboutClick,
-                        onNotificationsClick = onNotificationsClick
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
-                    SearchBar(onClick = onSearchClick)
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-                item {
-                    Text(
-                        text = "Categorias",
-                        color = TextPrimary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Categorias", color = TechFixTextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
                     CategoriesRow(
-                        categories = homeCategories,
-                        onCategoryClick = onCategoryClick
+                        selectedId = selectedCategoryId,
+                        onSelected = { id -> selectedCategoryId = if (selectedCategoryId == id) null else id }
                     )
-                    Spacer(modifier = Modifier.height(28.dp))
+                }
+
+                if (isSearching) {
+                    item {
+                        Text(
+                            text = if (matches.size == 1) "1 profissional encontrado" else "${matches.size} profissionais encontrados",
+                            color = TechFixTextPrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    if (matches.isEmpty()) {
+                        item {
+                            Text("Tente outro termo ou categoria.", color = TechFixTextSecondary)
+                        }
+                    }
+                    items(items = matches, key = { it.id }) { professional ->
+                        ProfessionalCard(professional, onClick = { onProfessionalClick(professional.id) })
+                    }
+                } else {
+                    item {
+                        HomeOrdersCard(
+                            activeOrders = activeOrders,
+                            onOrderClick = onOrderClick,
+                            onViewOrders = { onNavItemSelected(HomeNavItem.ORDERS) }
+                        )
+                    }
                 }
 
                 item {
-                    Text(
-                        text = "Profissionais em destaque",
-                        color = TextPrimary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = { onNavItemSelected(HomeNavItem.EXPLORE) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TechFixTextPrimary),
+                        border = BorderStroke(1.dp, TechFixBorder)
+                    ) {
+                        Icon(Icons.Outlined.Search, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Explorar todos os profissionais")
+                    }
                 }
-
-                items(professionals) { professional ->
-                    ProfessionalCard(
-                        professional = professional,
-                        onClick = { onProfessionalClick(professional.id) }
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                item { Spacer(modifier = Modifier.height(8.dp)) }
             }
 
-            HomeBottomNav(
-                selected = selectedNavItem,
-                onItemSelected = {
-                    selectedNavItem = it
-                    onNavItemSelected(it)
-                }
-            )
+            TechFixBottomNav(selected = HomeNavItem.HOME, onItemSelected = onNavItemSelected)
         }
     }
 }
 
-enum class HomeNavItem { HOME, EXPLORE, ORDERS, PROFILE }
-
-// =========================================================================================
-// COMPONENTS
-// =========================================================================================
-
 @Composable
-private fun HomeHeader(
-    userFirstName: String,
-    onAboutClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {}
-) {
+private fun HomeHeader(userFirstName: String, onNotificationsClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Text(
-                text = "Olá, $userFirstName 👋",
-                color = TextPrimary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Olá, $userFirstName 👋", color = TechFixTextPrimary, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
+            Text("Que serviço você precisa hoje?", color = TechFixTextSecondary, fontSize = 13.sp)
+        }
+        FilledTonalIconButton(
+            onClick = onNotificationsClick,
+            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = TechFixSurfaceVariant,
+                contentColor = TechFixTextPrimary
             )
-            Spacer(modifier = Modifier.height(2.dp))
+        ) {
+            Icon(Icons.Outlined.Notifications, contentDescription = "Notificações")
+        }
+    }
+}
+
+@Composable
+private fun HomeOrdersCard(
+    activeOrders: List<ServiceOrder>,
+    onOrderClick: (String) -> Unit,
+    onViewOrders: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = TechFixSurface,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, TechFixBorder)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Seus pedidos", color = TechFixTextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Spacer(Modifier.height(6.dp))
             Text(
-                text = "Que serviço você precisa hoje?",
-                color = TextSecondary,
+                text = when (activeOrders.size) {
+                    0 -> "Você não tem pedidos ativos."
+                    1 -> "1 pedido ativo"
+                    else -> "${activeOrders.size} pedidos ativos"
+                },
+                color = TechFixTextSecondary,
                 fontSize = 13.sp
             )
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            // Ícone pro Sobre Nós
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(CardDark)
-                    .border(BorderStroke(1.dp, CardBorderIdle), CircleShape)
-                    .clickable { onAboutClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = "Sobre Nós",
-                    tint = TextPrimary,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(CardDark)
-                    .border(BorderStroke(1.dp, CardBorderIdle), CircleShape)
-                    .clickable { onNotificationsClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Notificações",
-                    tint = TextPrimary,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SearchBar(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(CardDark)
-            .border(BorderStroke(1.dp, CardBorderIdle), RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = null,
-            tint = TextSecondary,
-            modifier = Modifier.size(18.dp)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(
-            text = "Buscar especialistas ou serviços",
-            color = TextSecondary,
-            fontSize = 13.sp
-        )
-    }
-}
-
-@Composable
-private fun CategoriesRow(
-    categories: List<HomeCategory>,
-    onCategoryClick: (String) -> Unit
-) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(categories) { category ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .width(72.dp)
-                    .clickable { onCategoryClick(category.id) }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(CardDark)
-                        .border(BorderStroke(1.dp, CardBorderIdle), RoundedCornerShape(16.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = category.icon,
-                        contentDescription = null,
-                        tint = AccentEnd,
-                        modifier = Modifier.size(22.dp)
-                    )
+            activeOrders.firstOrNull()?.let { latest ->
+                TextButton(onClick = { onOrderClick(latest.id) }, contentPadding = PaddingValues(0.dp)) {
+                    Column {
+                        Text(latest.serviceDescription, color = TechFixTextPrimary, fontWeight = FontWeight.SemiBold)
+                        Text(latest.status.label, color = TechFixTextSecondary, fontSize = 12.sp)
+                    }
                 }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = category.label,
-                    color = TextSecondary,
-                    fontSize = 11.sp,
-                    maxLines = 1
-                )
             }
+            TextButton(onClick = onViewOrders, contentPadding = PaddingValues(0.dp)) {
+                Text("Ver todos os pedidos", color = TechFixAccentSolid)
+                Spacer(Modifier.width(4.dp))
+                Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = TechFixAccentSolid)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchBar(search: String, onSearchChange: (String) -> Unit) {
+    val focusManager = LocalFocusManager.current
+    OutlinedTextField(
+        value = search,
+        onValueChange = onSearchChange,
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+        label = { Text("Buscar profissionais ou serviços") },
+        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+        trailingIcon = {
+            if (search.isNotEmpty()) {
+                IconButton(onClick = { onSearchChange("") }) {
+                    Icon(Icons.Outlined.Close, contentDescription = "Limpar busca")
+                }
+            }
+        },
+        shape = RoundedCornerShape(14.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = TechFixSurface,
+            unfocusedContainerColor = TechFixSurface,
+            focusedBorderColor = TechFixAccentSolid,
+            unfocusedBorderColor = TechFixBorder,
+            cursorColor = TechFixAccentSolid
+        )
+    )
+}
+
+@Composable
+private fun CategoriesRow(selectedId: String?, onSelected: (String?) -> Unit) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        item {
+            FilterChip(selected = selectedId == null, onClick = { onSelected(null) }, label = { Text("Todas") })
+        }
+        items(items = homeCategories, key = { it.id }) { category ->
+            FilterChip(
+                selected = category.id == selectedId,
+                onClick = { onSelected(category.id) },
+                label = { Text(category.label) },
+                leadingIcon = { Icon(category.icon, contentDescription = null, modifier = Modifier.size(16.dp)) }
+            )
         }
     }
 }
@@ -295,9 +308,9 @@ private fun ProfessionalCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
-        color = CardDark,
+        color = TechFixSurface,
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, CardBorderIdle)
+        border = BorderStroke(1.dp, TechFixBorder)
     ) {
         Row(
             modifier = Modifier.padding(14.dp),
@@ -307,12 +320,12 @@ private fun ProfessionalCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(AccentGradient),
+                    .background(TechFixAccentBrush),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = professional.name.first().toString(),
-                    color = Color.White,
+                    text = professional.name.firstOrNull()?.uppercase() ?: "?",
+                    color = TechFixTextPrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -323,14 +336,14 @@ private fun ProfessionalCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = professional.name,
-                    color = TextPrimary,
+                    color = TechFixTextPrimary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = professional.specialty,
-                    color = TextSecondary,
+                    color = TechFixTextSecondary,
                     fontSize = 12.sp
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -338,26 +351,26 @@ private fun ProfessionalCard(
                     Icon(
                         imageVector = Icons.Outlined.Star,
                         contentDescription = null,
-                        tint = AccentEnd,
+                        tint = TechFixAccentSolid,
                         modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "${professional.rating} (${professional.reviewCount})",
-                        color = TextLabel,
+                        color = TechFixTextTertiary,
                         fontSize = 11.sp
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Icon(
                         imageVector = Icons.Outlined.LocationOn,
                         contentDescription = null,
-                        tint = TextLabel,
+                        tint = TechFixTextTertiary,
                         modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
                         text = "${professional.distanceKm} km",
-                        color = TextLabel,
+                        color = TechFixTextTertiary,
                         fontSize = 11.sp
                     )
                 }
@@ -370,8 +383,8 @@ private fun ProfessionalCard(
 
 @Composable
 private fun AvailabilityBadge(available: Boolean) {
-    val backgroundColor = if (available) Color(0xFF1E3A2A) else Color(0xFF3A2A2A)
-    val textColor = if (available) Color(0xFF4CD97B) else Color(0xFFD97B7B)
+    val backgroundColor = if (available) TechFixGreenBg else TechFixRedBg
+    val textColor = if (available) TechFixGreen else TechFixRed
     val label = if (available) "Disponível" else "Ocupado"
 
     Box(
@@ -384,75 +397,8 @@ private fun AvailabilityBadge(available: Boolean) {
     }
 }
 
-@Composable
-private fun HomeBottomNav(
-    selected: HomeNavItem,
-    onItemSelected: (HomeNavItem) -> Unit
-) {
-    Surface(color = CardDark, border = BorderStroke(1.dp, CardBorderIdle)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            NavItem(
-                icon = Icons.Default.Home,
-                label = "Início",
-                selected = selected == HomeNavItem.HOME,
-                onClick = { onItemSelected(HomeNavItem.HOME) }
-            )
-            NavItem(
-                icon = Icons.Default.Search,
-                label = "Explorar",
-                selected = selected == HomeNavItem.EXPLORE,
-                onClick = { onItemSelected(HomeNavItem.EXPLORE) }
-            )
-            NavItem(
-                icon = Icons.Outlined.Receipt,
-                label = "Pedidos",
-                selected = selected == HomeNavItem.ORDERS,
-                onClick = { onItemSelected(HomeNavItem.ORDERS) }
-            )
-            NavItem(
-                icon = Icons.Default.Person,
-                label = "Perfil",
-                selected = selected == HomeNavItem.PROFILE,
-                onClick = { onItemSelected(HomeNavItem.PROFILE) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun NavItem(
-    icon: ImageVector,
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val tint = if (selected) AccentEnd else TextSecondary
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
-    ) {
-        Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(text = label, color = tint, fontSize = 10.sp)
-    }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFF121212)
+@Preview(showBackground = true)
 @Composable
 private fun HomeScreenPreview() {
-    MaterialTheme {
-        HomeScreen(
-            userFirstName = "Rafael",
-            professionals = listOf(
-                Professional("1", "Carlos Mendes", "Eletricista", 4.9, 128, 1.2, true),
-                Professional("2", "Ana Ferreira", "Técnica em Celulares", 4.8, 94, 2.4, false)
-            )
-        )
-    }
+    TechFixTheme { HomeScreen(userFirstName = "Rafael") }
 }
