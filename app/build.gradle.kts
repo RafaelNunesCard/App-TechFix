@@ -4,6 +4,11 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// Cada nova execução do GitHub Actions usa um código de versão maior.
+val apkVersionCode = providers.environmentVariable("GITHUB_RUN_NUMBER")
+    .map { it.toInt() }
+    .getOrElse(1)
+
 android {
     namespace = "com.example.techfix"
     compileSdk {
@@ -14,7 +19,7 @@ android {
         applicationId = "com.example.techfix"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
+        versionCode = apkVersionCode
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
