@@ -6,12 +6,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -84,6 +80,7 @@ import com.example.techfix.ui.onboarding.professional.ProWorkDetails
 import com.example.techfix.ui.onboarding.professional.ProWorkDetailsScreen
 import com.example.techfix.ui.onboarding.professional.proServiceCategories
 import com.example.techfix.ui.profile.EditProfileScreen
+import com.example.techfix.ui.profile.ProfileMenuDialog
 import com.example.techfix.ui.profile.ProfileScreen
 import com.example.techfix.ui.notifications.AppNotification
 import com.example.techfix.ui.notifications.NotificationKind
@@ -767,15 +764,10 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             val professionalProfiles by remember { database.professionalProfileDao().observeAll() }
                 .collectAsState(initial = emptyList())
             val profilesByEmail = remember(professionalProfiles) { professionalProfiles.associateBy { it.userEmail } }
-            val orders by remember(loggedInEmail) {
-                database.serviceOrderDao().observeByClient(loggedInEmail)
-            }.collectAsState(initial = emptyList())
 
             HomeScreen(
                 userFirstName = firstName,
                 professionals = professionals.map { it.toUi(it.email?.let(profilesByEmail::get)) },
-                orders = orders.map { it.toUi() },
-                onOrderClick = { orderId -> navController.navigate("order_detail/$orderId") },
                 onProfessionalClick = { id -> navController.navigate("request_service/$id") },
                 onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) },
                 onNavItemSelected = navigateToMainTab
@@ -828,7 +820,6 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             val proId = entry.arguments?.getString("proId").orEmpty()
             val pros by remember { database.professionalDao().observeAll() }
                 .collectAsState(initial = emptyList())
-            // "0" (botão do Perfil) = sem profissional escolhido → pega um disponível.
             val target = pros.firstOrNull { it.id == proId }
                 ?: pros.firstOrNull { it.available }
                 ?: pros.firstOrNull()
@@ -1069,29 +1060,19 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             }
 
             if (showMenuDialog) {
-                AlertDialog(
+                ProfileMenuDialog(
                     onDismissRequest = { showMenuDialog = false },
-                    title = { Text("Menu") },
-                    text = {
-                        Column {
-                            TextButton(onClick = {
-                                showMenuDialog = false
-                                navController.navigate(Routes.NOTIFICATIONS)
-                            }) { Text("Notificações") }
-                            TextButton(onClick = {
-                                showMenuDialog = false
-                                navController.navigate(Routes.PAYMENT)
-                            }) { Text("Formas de pagamento") }
-                        }
+                    onNotificationsClick = {
+                        showMenuDialog = false
+                        navController.navigate(Routes.NOTIFICATIONS)
                     },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showMenuDialog = false
-                            performLogout()
-                        }) { Text("Sair da conta") }
+                    onPaymentClick = {
+                        showMenuDialog = false
+                        navController.navigate(Routes.PAYMENT)
                     },
-                    dismissButton = {
-                        TextButton(onClick = { showMenuDialog = false }) { Text("Cancelar") }
+                    onLogoutClick = {
+                        showMenuDialog = false
+                        performLogout()
                     }
                 )
             }
@@ -1110,7 +1091,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 isProfessional = isProfessional,
                 onMenuClick = { showMenuDialog = true },
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
-                onRequestServiceClick = { navController.navigate("request_service/0") },
+                onRequestServiceClick = { navigateToMainTab(HomeNavItem.EXPLORE) },
                 onSeeAllHistoryClick = { navController.navigateToTab(Routes.ORDERS, homeRoute()) },
                 onLogoutClick = { performLogout() },
                 onOpenDbViewer = { navController.navigate(Routes.DB_VIEWER) },
