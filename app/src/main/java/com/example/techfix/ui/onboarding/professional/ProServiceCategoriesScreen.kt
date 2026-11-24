@@ -15,19 +15,54 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-data class ProServiceCategory(val id: String, val label: String, val icon: ImageVector)
+internal data class ProServiceCategory(
+    val id: String,
+    val label: String,
+    val icon: ImageVector,
+    val specialties: List<String>
+)
 
-private val proServiceCategories = listOf(
-    ProServiceCategory("technology", "Tecnologia", Icons.Outlined.Computer),
-    ProServiceCategory("construction", "Construção", Icons.Outlined.Handyman),
-    ProServiceCategory("electrical", "Elétrica", Icons.Outlined.Bolt),
-    ProServiceCategory("plumbing", "Hidráulica", Icons.Outlined.Plumbing),
-    ProServiceCategory("cleaning", "Limpeza", Icons.Outlined.CleaningServices),
-    ProServiceCategory("beauty", "Beleza", Icons.Outlined.ContentCut),
-    ProServiceCategory("education", "Educação", Icons.Outlined.School),
-    ProServiceCategory("transportation", "Transporte", Icons.Outlined.LocalShipping),
-    ProServiceCategory("maintenance", "Manutenção", Icons.Outlined.Build),
-    ProServiceCategory("painting", "Pintura", Icons.Outlined.FormatPaint)
+internal val proServiceCategories = listOf(
+    ProServiceCategory(
+        "technology", "Tecnologia", Icons.Outlined.Computer,
+        listOf("Reparo de computadores", "Troca de tela de celular", "Instalação de redes", "Recuperação de dados", "Configuração de Smart TV")
+    ),
+    ProServiceCategory(
+        "construction", "Construção", Icons.Outlined.Handyman,
+        listOf("Alvenaria", "Assentamento de pisos", "Instalação de drywall", "Reformas residenciais")
+    ),
+    ProServiceCategory(
+        "electrical", "Elétrica", Icons.Outlined.Bolt,
+        listOf("Instalação elétrica residencial", "Troca de quadro elétrico", "Casa inteligente", "Reparo de ar-condicionado")
+    ),
+    ProServiceCategory(
+        "plumbing", "Hidráulica", Icons.Outlined.Plumbing,
+        listOf("Conserto de vazamentos", "Desentupimento", "Instalação de torneiras", "Manutenção de encanamento")
+    ),
+    ProServiceCategory(
+        "cleaning", "Limpeza", Icons.Outlined.CleaningServices,
+        listOf("Limpeza residencial", "Limpeza pós-obra", "Higienização de estofados", "Limpeza de vidros")
+    ),
+    ProServiceCategory(
+        "beauty", "Beleza", Icons.Outlined.ContentCut,
+        listOf("Corte de cabelo", "Manicure e pedicure", "Maquiagem", "Design de sobrancelhas")
+    ),
+    ProServiceCategory(
+        "education", "Educação", Icons.Outlined.School,
+        listOf("Reforço escolar", "Aulas de idiomas", "Aulas de informática", "Preparação para provas")
+    ),
+    ProServiceCategory(
+        "transportation", "Transporte", Icons.Outlined.LocalShipping,
+        listOf("Fretes", "Mudanças", "Entregas locais", "Transporte de móveis")
+    ),
+    ProServiceCategory(
+        "maintenance", "Manutenção", Icons.Outlined.Build,
+        listOf("Montagem de móveis", "Pequenos reparos", "Manutenção de eletrodomésticos", "Instalação de prateleiras")
+    ),
+    ProServiceCategory(
+        "painting", "Pintura", Icons.Outlined.FormatPaint,
+        listOf("Pintura interna", "Pintura externa", "Acabamento em paredes", "Pintura de portas e janelas")
+    )
 )
 
 /**
@@ -38,10 +73,11 @@ private val proServiceCategories = listOf(
 fun ProServiceCategoriesScreen(
     totalSteps: Int = 5,
     currentStep: Int = 1,
+    initialSelectedIds: Set<String> = emptySet(),
     onBack: () -> Unit,
     onContinue: (Set<String>) -> Unit
 ) {
-    var selectedIds by remember { mutableStateOf(setOf("technology", "electrical", "maintenance")) }
+    var selectedIds by remember(initialSelectedIds) { mutableStateOf(initialSelectedIds) }
 
     Surface(modifier = Modifier.fillMaxSize(), color = BackgroundDark) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
