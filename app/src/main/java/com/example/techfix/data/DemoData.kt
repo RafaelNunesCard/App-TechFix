@@ -13,9 +13,8 @@ import kotlinx.coroutines.withContext
 /**
  * Dados de demonstração (para a feira / apresentação).
  *
- * É chamado toda vez que o app abre, mas só cria o que ainda NÃO existe:
- * se a conta demo já está no banco, não mexe em nada. Se o banco for
- * apagado (ex: mudança de versão), tudo isso é recriado sozinho.
+ * É chamado ao abrir o app. Cria as contas e pedidos de demonstração que ainda
+ * faltam, preservando os dados e os status já salvos.
  *
  * Contas de teste (a senha é a mesma nas duas):
  *   Cliente:      cliente@techfix.demo
@@ -154,5 +153,54 @@ object DemoData {
                 )
             )
         }
+
+        // IDs negativos reservados para esses exemplos. Assim, instalações existentes
+        // recebem os novos pedidos uma vez, sem sobrescrever alterações de status.
+        orderDao.insertMissingDemoOrders(
+            listOf(
+                ServiceOrderEntity(
+                    id = -1L,
+                    clientEmail = CLIENT_EMAIL,
+                    professionalEmail = PRO_EMAIL,
+                    professionalName = "Carlos Mendes",
+                    deviceName = "Iluminação da varanda",
+                    serviceDescription = "Instalação de luminárias externas",
+                    status = "APPROVED",
+                    priceCents = 24000,
+                    createdAt = now,
+                    problemText = "A varanda tem dois pontos de luz e já comprei as luminárias.",
+                    scheduledLabel = "Horário a combinar",
+                    locationLabel = "Na casa da cliente"
+                ),
+                ServiceOrderEntity(
+                    id = -2L,
+                    clientEmail = CLIENT_EMAIL,
+                    professionalEmail = null,
+                    professionalName = "Beatriz Santos",
+                    deviceName = "Pia da cozinha",
+                    serviceDescription = "Conserto de vazamento na pia",
+                    status = "IN_PROGRESS",
+                    priceCents = 15500,
+                    createdAt = now - 2 * DAY,
+                    problemText = "O sifão pinga sempre que abro a torneira.",
+                    scheduledLabel = "Horário a combinar",
+                    locationLabel = "Na casa da cliente"
+                ),
+                ServiceOrderEntity(
+                    id = -3L,
+                    clientEmail = CLIENT_EMAIL,
+                    professionalEmail = null,
+                    professionalName = "Rafael Martins",
+                    deviceName = "Quarto",
+                    serviceDescription = "Pintura das paredes do quarto",
+                    status = "COMPLETED",
+                    priceCents = 46000,
+                    createdAt = now - 12 * DAY,
+                    problemText = "Pintar as quatro paredes e corrigir pequenos furos antes da aplicação.",
+                    scheduledLabel = "Atendimento realizado",
+                    locationLabel = "Na casa da cliente"
+                )
+            )
+        )
     }
 }
