@@ -15,6 +15,23 @@ interface ProfessionalDao {
     @Query("SELECT * FROM professionals ORDER BY rating DESC, reviewCount DESC")
     fun observeAll(): Flow<List<ProfessionalEntity>>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveRecentView(view: RecentProfessionalView)
+
+    @Query(
+        "DELETE FROM recent_professional_views WHERE viewerEmail = :viewerEmail " +
+            "AND professionalId NOT IN (SELECT professionalId FROM recent_professional_views " +
+            "WHERE viewerEmail = :viewerEmail ORDER BY viewedAt DESC, rowid DESC LIMIT 3)"
+    )
+    suspend fun trimRecentViews(viewerEmail: String)
+
+    @Query(
+        "SELECT v.professionalId FROM recent_professional_views AS v " +
+            "INNER JOIN professionals AS p ON p.id = v.professionalId " +
+            "WHERE v.viewerEmail = :viewerEmail ORDER BY v.viewedAt DESC, v.rowid DESC LIMIT 3"
+    )
+    fun observeRecentIds(viewerEmail: String): Flow<List<String>>
+
     @Query("UPDATE professionals SET available = :available WHERE email = :email")
     suspend fun setAvailability(email: String, available: Boolean)
 

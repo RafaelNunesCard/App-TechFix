@@ -15,9 +15,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ServiceOrderEntity::class,
         ProfessionalEntity::class,
         ChatMessageEntity::class,
-        ServiceReviewEntity::class
+        ServiceReviewEntity::class,
+        RecentProfessionalView::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class TechFixDatabase : RoomDatabase() {
@@ -76,6 +77,21 @@ abstract class TechFixDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS recent_professional_views (
+                        viewerEmail TEXT NOT NULL,
+                        professionalId TEXT NOT NULL,
+                        viewedAt INTEGER NOT NULL,
+                        PRIMARY KEY (viewerEmail, professionalId)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         @Volatile
         private var INSTANCE: TechFixDatabase? = null
 
@@ -86,7 +102,7 @@ abstract class TechFixDatabase : RoomDatabase() {
                     TechFixDatabase::class.java,
                     "techfix.db"
                 )
-                    .addMigrations(MIGRATION_5_6)
+                    .addMigrations(MIGRATION_5_6, MIGRATION_6_7)
                     // Mantém o comportamento anterior para esquemas sem migração cadastrada.
                     .fallbackToDestructiveMigration()
                     .build()
