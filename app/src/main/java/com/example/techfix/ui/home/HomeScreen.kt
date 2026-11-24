@@ -29,8 +29,6 @@ import androidx.compose.ui.unit.sp
 import com.example.techfix.ui.components.HomeNavItem
 import com.example.techfix.ui.components.TechFixBottomNav
 import com.example.techfix.ui.onboarding.professional.proServiceCategories
-import com.example.techfix.ui.orders.OrderStatus
-import com.example.techfix.ui.orders.ServiceOrder
 import com.example.techfix.ui.theme.*
 import java.text.Normalizer
 import java.util.Locale
@@ -92,6 +90,8 @@ private fun Professional.matchesCategory(category: HomeCategory): Boolean {
 }
 
 private fun List<Professional>.matching(query: String, selectedCategory: HomeCategory?): List<Professional> {
+    if (query.isEmpty() && selectedCategory == null) return this
+
     val terms = if (query.isEmpty()) emptyList() else query.split(" ")
     return filter { professional ->
         val categories = homeCategories.filter { professional.matchesCategory(it) }
@@ -106,8 +106,6 @@ private fun List<Professional>.matching(query: String, selectedCategory: HomeCat
 fun HomeScreen(
     userFirstName: String,
     professionals: List<Professional> = emptyList(),
-    orders: List<ServiceOrder> = emptyList(),
-    onOrderClick: (String) -> Unit = {},
     onProfessionalClick: (String) -> Unit = {},
     onNavItemSelected: (HomeNavItem) -> Unit = {},
     onNotificationsClick: () -> Unit = {}
@@ -116,11 +114,9 @@ fun HomeScreen(
     var selectedCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
     val query = remember(search) { search.searchTerms() }
     val selectedCategory = homeCategories.firstOrNull { it.id == selectedCategoryId }
-    val isSearching = query.isNotEmpty() || selectedCategory != null
     val matches = remember(professionals, query, selectedCategory) {
-        if (isSearching) professionals.matching(query, selectedCategory) else emptyList()
+        professionals.matching(query, selectedCategory)
     }
-    val activeOrders = orders.filter { it.status != OrderStatus.COMPLETED && it.status != OrderStatus.CANCELED }
 
     Surface(modifier = Modifier.fillMaxSize(), color = TechFixBackground) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -141,30 +137,27 @@ fun HomeScreen(
                     )
                 }
 
-                if (isSearching) {
+                item {
+                    Text(
+                        text = if (matches.size == 1) "1 profissional encontrado" else "${matches.size} profissionais encontrados",
+                        color = TechFixTextPrimary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                if (matches.isEmpty()) {
                     item {
                         Text(
-                            text = if (matches.size == 1) "1 profissional encontrado" else "${matches.size} profissionais encontrados",
-                            color = TechFixTextPrimary,
-                            fontWeight = FontWeight.SemiBold
+                            text = if (query.isEmpty() && selectedCategory == null) {
+                                "Ainda não há profissionais cadastrados."
+                            } else {
+                                "Tente outro termo ou categoria."
+                            },
+                            color = TechFixTextSecondary
                         )
                     }
-                    if (matches.isEmpty()) {
-                        item {
-                            Text("Tente outro termo ou categoria.", color = TechFixTextSecondary)
-                        }
-                    }
-                    items(items = matches, key = { it.id }) { professional ->
-                        ProfessionalCard(professional, onClick = { onProfessionalClick(professional.id) })
-                    }
-                } else {
-                    item {
-                        HomeOrdersCard(
-                            activeOrders = activeOrders,
-                            onOrderClick = onOrderClick,
-                            onViewOrders = { onNavItemSelected(HomeNavItem.ORDERS) }
-                        )
-                    }
+                }
+                items(items = matches, key = { it.id }) { professional ->
+                    ProfessionalCard(professional, onClick = { onProfessionalClick(professional.id) })
                 }
 
                 item {
@@ -206,47 +199,6 @@ private fun HomeHeader(userFirstName: String, onNotificationsClick: () -> Unit) 
             )
         ) {
             Icon(Icons.Outlined.Notifications, contentDescription = "Notificações")
-        }
-    }
-}
-
-@Composable
-private fun HomeOrdersCard(
-    activeOrders: List<ServiceOrder>,
-    onOrderClick: (String) -> Unit,
-    onViewOrders: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = TechFixSurface,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, TechFixBorder)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Seus pedidos", color = TechFixTextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = when (activeOrders.size) {
-                    0 -> "Você não tem pedidos ativos."
-                    1 -> "1 pedido ativo"
-                    else -> "${activeOrders.size} pedidos ativos"
-                },
-                color = TechFixTextSecondary,
-                fontSize = 13.sp
-            )
-            activeOrders.firstOrNull()?.let { latest ->
-                TextButton(onClick = { onOrderClick(latest.id) }, contentPadding = PaddingValues(0.dp)) {
-                    Column {
-                        Text(latest.serviceDescription, color = TechFixTextPrimary, fontWeight = FontWeight.SemiBold)
-                        Text(latest.status.label, color = TechFixTextSecondary, fontSize = 12.sp)
-                    }
-                }
-            }
-            TextButton(onClick = onViewOrders, contentPadding = PaddingValues(0.dp)) {
-                Text("Ver todos os pedidos", color = TechFixAccentSolid)
-                Spacer(Modifier.width(4.dp))
-                Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = TechFixAccentSolid)
-            }
         }
     }
 }
