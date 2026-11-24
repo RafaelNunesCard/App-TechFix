@@ -24,5 +24,6 @@ data class ServiceOrderEntity(
     /** Ex: "Hoje, 16:00". */
     val scheduledLabel: String = "",
     /** Ex: "Na casa do cliente - Rua das Flores, 120". */
-    val locationLabel: String = ""
+    val locationLabel: String = "",
+    val professionalId: String? = null
 )
