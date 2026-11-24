@@ -1,7 +1,9 @@
 package com.example.techfix
 
 import com.example.techfix.ui.splash.SplashScreen
+import android.database.sqlite.SQLiteException
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,6 +29,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.room.withTransaction
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -50,6 +54,7 @@ import com.example.techfix.data.local.IncomingMessage
 import com.example.techfix.data.local.ProfessionalEntity
 import com.example.techfix.data.local.ProfessionalProfileEntity
 import com.example.techfix.data.local.ProfessionalRating
+import com.example.techfix.data.local.RecentProfessionalView
 import com.example.techfix.data.local.ReceivedOrder
 import com.example.techfix.data.local.ServiceOrderEntity
 import com.example.techfix.data.local.TechFixDatabase
@@ -451,6 +456,24 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     // "suspend" — só podem ser chamadas de dentro de uma corrotina, e é
     // esse escopo que nos deixa abrir uma a partir de um clique.
     val coroutineScope = rememberCoroutineScope()
+    val professionalDao = remember(database) { database.professionalDao() }
+    val openProfessional: (String) -> Unit = { id ->
+        val email = loggedInEmail
+        if (email.isNotBlank()) {
+            val view = RecentProfessionalView(email, id, System.currentTimeMillis())
+            coroutineScope.launch {
+                try {
+                    database.withTransaction {
+                        professionalDao.saveRecentView(view)
+                        professionalDao.trimRecentViews(email)
+                    }
+                } catch (error: SQLiteException) {
+                    Log.w("TechFix", "Falha ao salvar o profissional visto recentemente", error)
+                }
+            }
+        }
+        navController.navigate("request_service/$id")
+    }
 
     // Client onboarding state
     var selectedCategoryIds by remember { mutableStateOf(setOf<String>()) }
@@ -783,7 +806,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 professionals = professionals.map {
                     it.toUi(it.email?.let(profilesByEmail::get), ratingsByProfessional[it.id])
                 },
-                onProfessionalClick = { id -> navController.navigate("request_service/$id") },
+                onProfessionalClick = openProfessional,
                 onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) },
                 onNavItemSelected = navigateToMainTab
             )
@@ -1030,13 +1053,22 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
 
         // ---------------- Barra inferior da Home ----------------
         composable(Routes.EXPLORE) {
-            val explorePros by remember { database.professionalDao().observeAll() }
+            val explorePros by remember(professionalDao) { professionalDao.observeAll() }
                 .collectAsState(initial = emptyList())
+            val recentIds = key(loggedInEmail) {
+                val ids by remember(professionalDao, loggedInEmail) {
+                    professionalDao.observeRecentIds(loggedInEmail)
+                }.collectAsState(initial = emptyList())
+                ids
+            }
+            val professionals = explorePros.map { it.toUi(localRating = ratingsByProfessional[it.id]) }
+            val professionalsById = professionals.associateBy { it.id }
 
             ProdutoScreen(
-                professionals = explorePros.map { it.toUi(localRating = ratingsByProfessional[it.id]) },
-                onProfessionalClick = { id -> navController.navigate("request_service/$id") },
-                onNavItemSelected = navigateToMainTab
+                professionals = professionals,
+                onProfessionalClick = openProfessional,
+                onNavItemSelected = navigateToMainTab,
+                recentlyViewed = recentIds.mapNotNull(professionalsById::get)
             )
         }
 
