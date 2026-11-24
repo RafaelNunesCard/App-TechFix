@@ -33,18 +33,23 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import com.example.techfix.data.ProfilePrefs
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 import com.example.techfix.data.AuthRepository
 import com.example.techfix.data.DemoData
 import com.example.techfix.data.PaymentPrefs
 import com.example.techfix.data.OnboardingRepository
+import com.example.techfix.data.ReviewAuthor
 import com.example.techfix.data.SessionManager
 import com.example.techfix.data.UserSession
+import com.example.techfix.data.canBeReviewedBy
+import com.example.techfix.data.submitServiceReview
 import com.example.techfix.data.local.ChatMessageEntity
 import com.example.techfix.data.local.IncomingMessage
 import com.example.techfix.data.local.ProfessionalEntity
 import com.example.techfix.data.local.ProfessionalProfileEntity
+import com.example.techfix.data.local.ProfessionalRating
 import com.example.techfix.data.local.ReceivedOrder
 import com.example.techfix.data.local.ServiceOrderEntity
 import com.example.techfix.data.local.TechFixDatabase
@@ -56,6 +61,7 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 import com.example.techfix.ui.auth.AuthUiState
 import com.example.techfix.ui.auth.AuthViewModel
 import com.example.techfix.ui.auth.ForgotPasswordScreen
@@ -270,12 +276,15 @@ private fun ServiceOrderEntity.toUi() = ServiceOrder(
     price = formatPrice(priceCents)
 )
 
-private fun ProfessionalEntity.toUi(profile: ProfessionalProfileEntity? = null) = Professional(
+private fun ProfessionalEntity.toUi(
+    profile: ProfessionalProfileEntity? = null,
+    localRating: ProfessionalRating? = null
+) = Professional(
     id = id,
     name = name,
     specialty = specialty,
-    rating = rating,
-    reviewCount = reviewCount,
+    rating = localRating?.rating?.let { (it * 10).roundToInt() / 10.0 } ?: rating,
+    reviewCount = localRating?.reviewCount ?: reviewCount,
     distanceKm = distanceKm,
     available = available,
     serviceCategoryIds = profile?.serviceCategoryIds.orEmpty().split(",")
@@ -430,6 +439,10 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
     // (client_onboarding / professional_profile).
     val database = remember { TechFixDatabase.getInstance(context) }
     val onboardingRepository = remember { OnboardingRepository(database) }
+    val reviewDao = remember(database) { database.serviceReviewDao() }
+    val ratingsByProfessional by remember(reviewDao) {
+        reviewDao.observeProfessionalRatings().map { ratings -> ratings.associateBy { it.professionalId } }
+    }.collectAsState(initial = emptyMap())
 
     // Cria as contas e os dados de demonstração se ainda não existirem
     // (ver DemoData.kt). Roda em segundo plano enquanto a Splash aparece.
@@ -767,7 +780,9 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
 
             HomeScreen(
                 userFirstName = firstName,
-                professionals = professionals.map { it.toUi(it.email?.let(profilesByEmail::get)) },
+                professionals = professionals.map {
+                    it.toUi(it.email?.let(profilesByEmail::get), ratingsByProfessional[it.id])
+                },
                 onProfessionalClick = { id -> navController.navigate("request_service/$id") },
                 onNotificationsClick = { navController.navigate(Routes.NOTIFICATIONS) },
                 onNavItemSelected = navigateToMainTab
@@ -823,10 +838,14 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             val target = pros.firstOrNull { it.id == proId }
                 ?: pros.firstOrNull { it.available }
                 ?: pros.firstOrNull()
+            val professionalReviews by remember(target?.id) {
+                reviewDao.observeForProfessional(target?.id.orEmpty())
+            }.collectAsState(initial = emptyList())
 
             RequestServiceScreen(
                 professionalName = target?.name ?: "Profissional TechFix",
                 professionalSpecialty = target?.specialty.orEmpty(),
+                professionalReviews = professionalReviews,
                 onBack = { navController.popBackStack() },
                 onSubmit = { form ->
                     coroutineScope.launch {
@@ -842,7 +861,8 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                                 createdAt = System.currentTimeMillis(),
                                 problemText = form.problem,
                                 scheduledLabel = form.scheduleLabel,
-                                locationLabel = form.locationLabel
+                                locationLabel = form.locationLabel,
+                                professionalId = target?.id
                             )
                         )
                     }
@@ -865,9 +885,18 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             val received by remember(orderId) {
                 database.serviceOrderDao().observeReceivedById(orderId)
             }.collectAsState(initial = null)
+            val order = received?.order?.takeIf { it.clientEmail == loggedInEmail }
+            val review by remember(orderId, loggedInEmail) {
+                reviewDao.observeSubmitted(orderId, ReviewAuthor.CLIENT.name, loggedInEmail)
+            }.collectAsState(initial = null)
 
             OrderDetailScreen(
-                detail = received?.let { it.order.toDetail(it.order.professionalName) },
+                detail = order?.let { it.toDetail(it.professionalName) },
+                submittedReview = review,
+                canReview = order?.canBeReviewedBy(loggedInEmail, ReviewAuthor.CLIENT) == true,
+                onSubmitReview = { stars, comment ->
+                    submitServiceReview(database, orderId, loggedInEmail, ReviewAuthor.CLIENT, stars, comment)
+                },
                 onBack = { navController.popBackStack() },
                 onCancelOrder = {
                     coroutineScope.launch {
@@ -886,12 +915,21 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
             val received by remember(orderId) {
                 database.serviceOrderDao().observeReceivedById(orderId)
             }.collectAsState(initial = null)
+            val request = received?.takeIf { it.order.professionalEmail == loggedInEmail }
+            val review by remember(orderId, loggedInEmail) {
+                reviewDao.observeSubmitted(orderId, ReviewAuthor.PROFESSIONAL.name, loggedInEmail)
+            }.collectAsState(initial = null)
 
             ProRequestDetailScreen(
-                detail = received?.let { it.order.toDetail(it.clientName) },
+                detail = request?.let { it.order.toDetail(it.clientName) },
+                submittedReview = review,
+                canReview = request?.order?.canBeReviewedBy(loggedInEmail, ReviewAuthor.PROFESSIONAL) == true,
+                onSubmitReview = { stars, comment ->
+                    submitServiceReview(database, orderId, loggedInEmail, ReviewAuthor.PROFESSIONAL, stars, comment)
+                },
                 onBack = { navController.popBackStack() },
                 onAdvance = {
-                    val order = received?.order
+                    val order = request?.order
                     val next = order?.let { nextStatus(it.status) }
                     if (order != null && next != null) {
                         coroutineScope.launch {
@@ -996,7 +1034,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                 .collectAsState(initial = emptyList())
 
             ProdutoScreen(
-                professionals = explorePros.map { it.toUi() },
+                professionals = explorePros.map { it.toUi(localRating = ratingsByProfessional[it.id]) },
                 onProfessionalClick = { id -> navController.navigate("request_service/$id") },
                 onNavItemSelected = navigateToMainTab
             )
@@ -1026,15 +1064,14 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
         composable(Routes.PROFILE) {
             var showMenuDialog by remember { mutableStateOf(false) }
 
-            // O histórico e o contador de serviços vêm dos pedidos reais do Room.
-            val profileOrders by remember(loggedInEmail) {
-                database.serviceOrderDao().observeByClient(loggedInEmail)
-            }.collectAsState(initial = emptyList())
             val profileReceived by remember(loggedInEmail) {
                 database.serviceOrderDao().observeReceivedByProfessional(loggedInEmail)
             }.collectAsState(initial = emptyList())
-            val uiOrders = if (isProfessional) profileReceived.map { it.toProUi() }
-            else profileOrders.map { it.toUi() }
+            val uiOrders = profileReceived.map { it.toProUi() }
+            val receivedReviews by remember(loggedInEmail, isProfessional) {
+                val authorRole = if (isProfessional) ReviewAuthor.CLIENT else ReviewAuthor.PROFESSIONAL
+                reviewDao.observeReceived(loggedInEmail, authorRole.name)
+            }.collectAsState(initial = emptyList())
 
             // Esquece a sessão salva e limpa tudo que era da conta anterior.
             val performLogout: () -> Unit = {
@@ -1089,6 +1126,7 @@ fun TechFixNavHost(navController: NavHostController = rememberNavController()) {
                         .map { it.toHistoryItem() }
                 ),
                 isProfessional = isProfessional,
+                receivedReviews = receivedReviews,
                 onMenuClick = { showMenuDialog = true },
                 onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
                 onRequestServiceClick = { navigateToMainTab(HomeNavItem.EXPLORE) },
