@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,10 +33,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.techfix.R
+import com.example.techfix.data.local.ServiceReview
 import com.example.techfix.model.SampleData
 import com.example.techfix.model.UserProfile
 import com.example.techfix.ui.components.*
 import com.example.techfix.ui.theme.*
+import kotlin.math.roundToInt
 
 /**
  * Tela de Perfil do Cliente (mobile-customer-profile), replicando o protótipo Figma
@@ -54,6 +57,7 @@ fun ProfileScreen(
     onLogoutClick: () -> Unit = {},
     onOpenDbViewer: () -> Unit = {},
     onNavItemSelected: (HomeNavItem) -> Unit = {},
+    receivedReviews: List<ServiceReview> = emptyList()
 ) {
     // Toque 5x seguidos na logo abre a tela do banco de dados (para a demonstração).
     val logoTaps = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0) }
@@ -94,13 +98,19 @@ fun ProfileScreen(
                 )
             }
 
-            item { StatsRow(profile = profile) }
-
-            item {
-                TechFixCard {
-                    Text("Sobre Mim", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    Text(profile.bio, style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.7f))
+            if (isProfessional) {
+                item { StatsRow(profile.completedServices, receivedReviews) }
+                item {
+                    TechFixCard {
+                        Text(
+                            "Sobre Mim",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TechFixTextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(profile.bio, style = MaterialTheme.typography.bodyLarge, color = TechFixTextSecondary)
+                    }
                 }
             }
 
@@ -128,61 +138,35 @@ fun ProfileScreen(
             }
 
             item {
-                TechFixCard {
+                ConfidenceCard(isProfessional, profile.loyaltyLabel, receivedReviews)
+            }
+
+            if (isProfessional) {
+                item {
                     Row(
                         Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Indicador de Confiança",
+                            "Histórico de Serviços",
                             style = MaterialTheme.typography.titleLarge,
                             color = TechFixTextPrimary,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(1f)
                         )
-                        if (isProfessional) {
-                            Spacer(Modifier.width(8.dp))
-                            Surface(color = TechFixGreenBg, shape = RoundedCornerShape(50)) {
-                                Text(
-                                    profile.loyaltyLabel,
-                                    color = TechFixGreen,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
+                        Text(
+                            "Ver todos",
+                            color = TechFixAccentSolid,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            modifier = Modifier.clickable(onClick = onSeeAllHistoryClick)
+                        )
                     }
-                    Spacer(Modifier.height(14.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Fidelidade", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.6f))
-                        Text("${profile.loyaltyPercent}%", style = MaterialTheme.typography.labelLarge, color = Color.White)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    TechFixProgressBar(progress = profile.loyaltyPercent)
                 }
-            }
-
-            item {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Histórico de Serviços", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                    Text(
-                        "Ver todos",
-                        color = TechFixAccentSolid,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp,
-                        modifier = Modifier.clickable(onClick = onSeeAllHistoryClick)
-                    )
+                items(profile.serviceHistory) { item ->
+                    ServiceHistoryCard(item = item)
                 }
-            }
-
-            items(profile.serviceHistory) { item ->
-                ServiceHistoryCard(item = item)
             }
 
             item {
@@ -425,32 +409,80 @@ private fun ProfileHeaderCard(
 }
 
 @Composable
-private fun StatsRow(profile: UserProfile) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        StatPill(
-            icon = Icons.Filled.CheckCircle,
-            iconTint = TechFixGreen,
-            label = "Concluídos",
-            value = profile.completedServices.toString(),
-            modifier = Modifier.weight(1f)
-        )
-        StatPill(
-            icon = Icons.Filled.Star,
-            iconTint = Color(0xFFE0C441),
-            label = "Avaliação",
-            value = "${profile.rating} ★",
-            modifier = Modifier.weight(1f)
-        )
-        StatPill(
-            icon = Icons.Filled.Shield,
-            iconTint = TechFixAccentSolid,
-            label = "Confiança",
-            value = "${profile.confidencePercent}%",
-            modifier = Modifier.weight(1f)
-        )
+private fun ConfidenceCard(isProfessional: Boolean, newAccountLabel: String, reviews: List<ServiceReview>) {
+    TechFixCard {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                "Indicador de Confiança",
+                style = MaterialTheme.typography.titleLarge,
+                color = TechFixTextPrimary,
+                fontWeight = FontWeight.Bold
+            )
+            if (reviews.isEmpty()) {
+                if (isProfessional) {
+                    Surface(color = TechFixGreenBg, shape = RoundedCornerShape(50)) {
+                        Text(
+                            newAccountLabel,
+                            color = TechFixGreen,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+                Text("Nenhuma avaliação recebida ainda.", color = TechFixTextPrimary)
+                Text(
+                    if (isProfessional) "Clientes podem avaliar seu atendimento após um pedido concluído."
+                    else "Profissionais podem avaliar você após um pedido concluído.",
+                    color = TechFixTextSecondary
+                )
+            } else {
+                ReviewSummary(reviews)
+                ReviewListButton(reviews, title = "Avaliações recebidas", label = "Ver avaliações recebidas")
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun StatsRow(completedServices: Int, reviews: List<ServiceReview>) {
+    val average = if (reviews.isEmpty()) null else reviews.map { it.stars }.average()
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val spacing = 10.dp
+        val minWidth = (92 * LocalDensity.current.fontScale.coerceAtLeast(1f)).dp
+        val columns = when {
+            maxWidth >= minWidth * 3 + spacing * 2 -> 3
+            maxWidth >= minWidth * 2 + spacing -> 2
+            else -> 1
+        }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(spacing),
+            verticalArrangement = Arrangement.spacedBy(spacing),
+            maxItemsInEachRow = columns
+        ) {
+            StatPill(
+                icon = Icons.Filled.CheckCircle,
+                iconTint = TechFixGreen,
+                label = "Concluídos",
+                value = completedServices.toString(),
+                modifier = Modifier.weight(1f)
+            )
+            StatPill(
+                icon = Icons.Filled.Star,
+                iconTint = TechFixWarning,
+                label = "Avaliação",
+                value = average?.let { "${formatReviewScore(it)} ★" } ?: "—",
+                modifier = Modifier.weight(1f)
+            )
+            StatPill(
+                icon = Icons.Filled.Shield,
+                iconTint = TechFixAccentSolid,
+                label = "Confiança",
+                value = average?.let { "${(it * 20).roundToInt()}%" } ?: "—",
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 

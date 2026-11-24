@@ -184,28 +184,24 @@ fun EditProfileScreen(
                 )
             }
 
-            // Sobre mim
-            TechFixCard {
-
-                Text(
-                    text = "Sobre Mim",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                TechFixTextField(
-                    label = "Conte um pouco sobre você",
-                    value = bio,
-                    onValueChange = { bio = it },
-                    singleLine = false,
-                    minLines = 3
-                )
-            }
-
             if (isProfessional) {
+                TechFixCard {
+                    Text(
+                        text = "Sobre Mim",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = TechFixTextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    TechFixTextField(
+                        label = "Conte um pouco sobre você",
+                        value = bio,
+                        onValueChange = { bio = it },
+                        singleLine = false,
+                        minLines = 3
+                    )
+                }
+
                 // Categorias de interesse
                 TechFixCard {
 
