@@ -14,18 +14,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.NotificationsActive
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -35,12 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.techfix.ui.home.HomeNavItem
+import com.example.techfix.ui.components.HomeNavItem
+import com.example.techfix.ui.components.TechFixBottomNav
 import com.example.techfix.ui.orders.OrderStatus
 import com.example.techfix.ui.orders.ServiceOrder
 import com.example.techfix.ui.theme.TechFixAccentBrush
@@ -91,8 +88,8 @@ fun ProDashboardScreen(
     Surface(modifier = Modifier.fillMaxSize(), color = TechFixBackground) {
         Column(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
+                modifier = Modifier.weight(1f).statusBarsPadding(),
+                contentPadding = PaddingValues(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item {
@@ -232,7 +229,7 @@ fun ProDashboardScreen(
                 }
             }
 
-            ProBottomNav(onItemSelected = onNavItemSelected)
+            TechFixBottomNav(selected = HomeNavItem.HOME, onItemSelected = onNavItemSelected)
         }
     }
 }
@@ -360,35 +357,5 @@ private fun GradientPill(text: String, onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Text(text, color = TechFixTextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-private fun ProBottomNav(onItemSelected: (HomeNavItem) -> Unit) {
-    Surface(color = TechFixSurface, border = BorderStroke(1.dp, TechFixBorder)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            ProNavItem(Icons.Outlined.Home, "Início", selected = true) { onItemSelected(HomeNavItem.HOME) }
-            ProNavItem(Icons.Outlined.Search, "Explorar", selected = false) { onItemSelected(HomeNavItem.EXPLORE) }
-            ProNavItem(Icons.Outlined.Receipt, "Pedidos", selected = false) { onItemSelected(HomeNavItem.ORDERS) }
-            ProNavItem(Icons.Outlined.Person, "Perfil", selected = false) { onItemSelected(HomeNavItem.PROFILE) }
-        }
-    }
-}
-
-@Composable
-private fun ProNavItem(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
-    val tint: Color = if (selected) TechFixAccentSolid else TechFixTextSecondary
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
-    ) {
-        Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.height(2.dp))
-        Text(label, color = tint, fontSize = 10.sp)
     }
 }

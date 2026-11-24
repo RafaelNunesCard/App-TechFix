@@ -129,7 +129,7 @@ fun ProRequestDetailScreen(
                 DetailCard {
                     SectionTitle("Serviço")
                     Spacer(Modifier.height(10.dp))
-                    InfoRow("Aparelho", detail.deviceName)
+                    InfoRow("Item ou área", detail.deviceName)
                     InfoRow("Serviço", detail.service)
                     if (detail.problem.isNotBlank()) InfoRow("Descrição do cliente", detail.problem)
                 }
