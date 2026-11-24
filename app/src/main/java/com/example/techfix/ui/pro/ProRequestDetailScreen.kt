@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +31,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.techfix.data.local.ServiceReviewEntity
+import com.example.techfix.ui.components.OrderReviewCard
 import com.example.techfix.ui.orders.DetailCard
 import com.example.techfix.ui.orders.DetailHeader
 import com.example.techfix.ui.orders.InfoRow
@@ -61,7 +64,10 @@ fun ProRequestDetailScreen(
     onBack: () -> Unit,
     onAdvance: () -> Unit,
     onRefuse: () -> Unit,
-    onOpenChat: () -> Unit
+    onOpenChat: () -> Unit,
+    submittedReview: ServiceReviewEntity? = null,
+    canReview: Boolean = false,
+    onSubmitReview: suspend (Int, String) -> Boolean = { _, _ -> false }
 ) {
     var showRefuse by remember { mutableStateOf(false) }
     var reason by remember { mutableStateOf(refuseReasons.first()) }
@@ -96,7 +102,7 @@ fun ProRequestDetailScreen(
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = TechFixBackground) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().imePadding()) {
             DetailHeader(
                 title = if (detail != null) "Solicitação #${detail.id}" else "Solicitação",
                 onBack = onBack
@@ -139,6 +145,10 @@ fun ProRequestDetailScreen(
                     Spacer(Modifier.height(10.dp))
                     if (detail.schedule.isNotBlank()) InfoRow("Quando", detail.schedule)
                     if (detail.location.isNotBlank()) InfoRow("Onde", detail.location)
+                }
+
+                if (canReview && detail.status == OrderStatus.COMPLETED) {
+                    OrderReviewCard("Avaliar cliente", submittedReview, onSubmitReview)
                 }
 
                 DetailCard {
