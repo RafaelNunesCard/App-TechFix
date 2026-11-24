@@ -39,6 +39,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.techfix.data.local.ServiceReview
+import com.example.techfix.ui.components.ReviewListButton
 import com.example.techfix.ui.orders.DetailHeader
 import com.example.techfix.ui.orders.TECHFIX_FEE_CENTS
 import com.example.techfix.ui.orders.formatCents
@@ -103,7 +105,8 @@ fun RequestServiceScreen(
     onBack: () -> Unit,
     onSubmit: (RequestForm) -> Unit,
     onViewOrders: () -> Unit,
-    onGoHome: () -> Unit
+    onGoHome: () -> Unit,
+    professionalReviews: List<ServiceReview> = emptyList()
 ) {
     var sent by remember { mutableStateOf(false) }
     var selectedService by remember { mutableStateOf(serviceOptions.first()) }
@@ -154,6 +157,7 @@ fun RequestServiceScreen(
                             Text(professionalSpecialty, color = TechFixTextSecondary, fontSize = 12.sp)
                         }
                     }
+                    ReviewListButton(professionalReviews, title = "Avaliações do profissional")
                 }
 
                 Label("Qual serviço você precisa?")
