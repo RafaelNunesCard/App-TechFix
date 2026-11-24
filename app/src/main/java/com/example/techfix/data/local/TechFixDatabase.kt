@@ -34,16 +34,17 @@ abstract class TechFixDatabase : RoomDatabase() {
         private val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE service_orders ADD COLUMN professionalId TEXT")
+                // SQLite anterior a 3.39 exige GROUP BY quando há HAVING.
                 db.execSQL(
                     """
                     UPDATE service_orders
                     SET professionalId = (
-                        SELECT MIN(p.id) FROM professionals AS p
+                        SELECT CASE WHEN COUNT(*) = 1 THEN MIN(p.id) END
+                        FROM professionals AS p
                         WHERE (service_orders.professionalEmail IS NOT NULL
                                AND p.email = service_orders.professionalEmail)
                            OR (service_orders.professionalEmail IS NULL
                                AND p.email IS NULL AND p.name = service_orders.professionalName)
-                        HAVING COUNT(*) = 1
                     )
                     """.trimIndent()
                 )
