@@ -1,5 +1,6 @@
 package com.example.techfix.ui.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,18 +39,21 @@ import com.example.techfix.ui.theme.*
 @Composable
 fun ProfileScreen(
     profile: UserProfile = SampleData.carlosProfile,
+    isProfessional: Boolean = true,
     onMenuClick: () -> Unit = {},
     onEditProfileClick: () -> Unit = {},
     onRequestServiceClick: () -> Unit = {},
     onSeeAllHistoryClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onOpenDbViewer: () -> Unit = {},
+    onNavItemSelected: (HomeNavItem) -> Unit = {},
 ) {
     // Toque 5x seguidos na logo abre a tela do banco de dados (para a demonstração).
     val logoTaps = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0) }
     val lastTapAt = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0L) }
     Scaffold(
         containerColor = TechFixBackground,
+        bottomBar = { TechFixBottomNav(selected = HomeNavItem.PROFILE, onItemSelected = onNavItemSelected) },
         topBar = {
             TechFixTopBar(
                 onMenuClick = onMenuClick,
@@ -93,11 +97,18 @@ fun ProfileScreen(
                 }
             }
 
-            item {
-                TechFixCard {
-                    Text("Categorias de Interesse", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(12.dp))
-                    FlowRowChips(items = profile.interestCategories)
+            if (isProfessional && profile.interestCategories.isNotEmpty()) {
+                item {
+                    TechFixCard {
+                        Text(
+                            "Categorias de interesse",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TechFixTextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        FlowRowChips(items = profile.interestCategories)
+                    }
                 }
             }
 
@@ -116,15 +127,24 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Indicador de Confiança", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                        Surface(color = TechFixGreenBg, shape = RoundedCornerShape(50)) {
-                            Text(
-                                profile.loyaltyLabel,
-                                color = TechFixGreen,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
+                        Text(
+                            "Indicador de Confiança",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TechFixTextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (isProfessional) {
+                            Spacer(Modifier.width(8.dp))
+                            Surface(color = TechFixGreenBg, shape = RoundedCornerShape(50)) {
+                                Text(
+                                    profile.loyaltyLabel,
+                                    color = TechFixGreen,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
                         }
                     }
                     Spacer(Modifier.height(14.dp))
@@ -211,8 +231,25 @@ private fun TechFixTopBar(onMenuClick: () -> Unit, onLogoClick: () -> Unit) {
             )
         },
         actions = {
-            IconButton(onClick = onMenuClick) {
-                Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = TechFixTextPrimary)
+            OutlinedButton(
+                onClick = onMenuClick,
+                modifier = Modifier.padding(end = 16.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = TechFixSurfaceVariant,
+                    contentColor = TechFixTextPrimary
+                ),
+                border = BorderStroke(1.dp, TechFixBorder),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Menu,
+                    contentDescription = null,
+                    tint = TechFixAccentSolid,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("Menu", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = TechFixBackground)
@@ -327,15 +364,13 @@ private fun StatsRow(profile: UserProfile) {
     }
 }
 
-/** Simula um FlowRow (quebra de linha automática) sem depender da lib experimental. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FlowRowChips(items: List<String>, itemsPerRow: Int = 3) {
-    val chunks = items.chunked(itemsPerRow)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        chunks.forEach { rowItems ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                rowItems.forEach { InterestChip(it) }
-            }
-        }
+private fun FlowRowChips(items: List<String>) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items.forEach { InterestChip(it) }
     }
 }
